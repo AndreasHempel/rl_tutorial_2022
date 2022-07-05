@@ -1,0 +1,10 @@
+[package]
+name = "rl_tutorial_2022"
+license = "MIT OR Apache-2.0"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = { version = "0.7", features = ["dynamic"] }
+bevy-inspector-egui = { version = "0.11" }
+rand = { version = "0.8" }

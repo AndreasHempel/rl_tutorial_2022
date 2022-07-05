@@ -1,0 +1,51 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'rl_tutorial_2022'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=rl_tutorial_2022",
+                    "--package=rl_tutorial_2022"
+                ],
+                "filter": {
+                    "name": "rl_tutorial_2022",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "env": {
+                // Making assumptions about the install location of the Rust toolchain but hopefully general enough at least for Linux
+                "LD_LIBRARY_PATH": "${userHome}/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib:${workspaceFolder}/target/debug/deps",
+                // Needed to make sure assets are found from the workspace root
+                "CARGO_MANIFEST_DIR": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'rl_tutorial_2022'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=rl_tutorial_2022",
+                    "--package=rl_tutorial_2022"
+                ],
+                "filter": {
+                    "name": "rl_tutorial_2022",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
