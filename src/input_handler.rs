@@ -1,8 +1,18 @@
 use bevy::prelude::*;
 
 use super::GameState;
-use crate::actions::{TakingTurn, WantsToMove};
-use crate::components::Player;
+
+use crate::components::{Player, TakingTurn, WantsToMove};
+
+/// Bundles systems handling keyboard inputs
+#[derive(Debug)]
+pub struct KeyboardInputPlugin;
+
+impl Plugin for KeyboardInputPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(keyboard_event_handler);
+    }
+}
 
 /// Possible actions the player can take
 #[derive(Debug)]
@@ -11,7 +21,7 @@ enum PlayerAction {
 }
 
 /// Map keyboard input to player actions and update the [GameState]
-pub fn keyboard_event_handler(
+fn keyboard_event_handler(
     mut keys: ResMut<Input<KeyCode>>,
     mut player: Query<Entity, With<Player>>,
     mut game_state: ResMut<State<GameState>>,

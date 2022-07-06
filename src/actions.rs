@@ -2,25 +2,22 @@ use bevy::prelude::*;
 
 use crate::GameState;
 
-use crate::components::{Player, Position};
+use crate::components::{Actor, Player, Position, TakingTurn, WantsToMove};
 
-/// Signals an actor's intent to move
-#[derive(Debug, Component)]
-pub struct WantsToMove {
-    pub dx: i32,
-    pub dy: i32,
+/// Bundles all systems responsible for turn-based action management
+#[derive(Debug)]
+pub struct ActionPlugin;
+
+impl Plugin for ActionPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system_set(SystemSet::on_update(GameState::Ticking).with_system(move_actors))
+            .add_system_set(SystemSet::on_enter(GameState::Ticking).with_system(enqueue_actors))
+            .add_system_set(SystemSet::on_update(GameState::Ticking).with_system(wait_for_player));
+    }
 }
 
-/// Marks an entity that may take actions on each tick
-#[derive(Debug, Component, Default)]
-pub struct Actor;
-
-/// Marker component to indicate [Actor] that are taking a turn this game tick
-#[derive(Debug, Component)]
-pub struct TakingTurn;
-
 /// Updates the [Position] component of all moving actors
-pub fn move_actors(
+fn move_actors(
     mut chars: Query<(Entity, &WantsToMove, &mut Position), With<TakingTurn>>,
     mut commands: Commands,
 ) {
@@ -39,17 +36,14 @@ pub fn move_actors(
 }
 
 /// Marks all non-player actors to make their next move
-pub fn enqueue_actors(
-    actors: Query<Entity, (With<Actor>, Without<Player>)>,
-    mut commands: Commands,
-) {
+fn enqueue_actors(actors: Query<Entity, (With<Actor>, Without<Player>)>, mut commands: Commands) {
     for a in actors.iter() {
         commands.entity(a).insert(TakingTurn);
     }
 }
 
 /// Waits for all actors to have taken their turn and returns control to the player
-pub fn wait_for_player(
+fn wait_for_player(
     actors: Query<&Actor, With<TakingTurn>>,
     mut game_state: ResMut<State<GameState>>,
 ) {

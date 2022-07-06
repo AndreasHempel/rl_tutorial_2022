@@ -1,19 +1,33 @@
 use bevy::prelude::*;
 
 use crate::{
-    actions::Actor,
-    components::{Monster, Player, Position},
+    components::{Actor, Monster, Player, Position},
     render::TILE_SIZE,
 };
 
+/// Bundles spawning functions into a single plugin
+#[derive(Debug)]
+pub struct SpawningPlugin;
+
+impl Plugin for SpawningPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_startup_system(setup_player)
+            .add_startup_system(spawn_monster);
+    }
+}
+
+/// Size of the sprite assets
+const SPRITE_SIZE: f32 = 16.0;
+
 /// Spawn the player entity with associated components
-pub fn setup_player(
+fn setup_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     let texture_handle = asset_server.load("Dawnlike/Characters/Pest0.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 8, 11);
+    let texture_atlas =
+        TextureAtlas::from_grid(texture_handle, Vec2::new(SPRITE_SIZE, SPRITE_SIZE), 8, 11);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let mut sprite = TextureAtlasSprite::new(59);
     sprite.custom_size = Some(Vec2::new(TILE_SIZE, TILE_SIZE));
@@ -30,13 +44,14 @@ pub fn setup_player(
 }
 
 /// Spawn a monster into the world
-pub fn spawn_monster(
+fn spawn_monster(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     let texture_handle = asset_server.load("Dawnlike/Characters/Demon0.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 8, 9);
+    let texture_atlas =
+        TextureAtlas::from_grid(texture_handle, Vec2::new(SPRITE_SIZE, SPRITE_SIZE), 8, 9);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let mut sprite = TextureAtlasSprite::new(3);
     sprite.custom_size = Some(Vec2::new(TILE_SIZE, TILE_SIZE));

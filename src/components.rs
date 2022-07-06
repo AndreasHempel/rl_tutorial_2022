@@ -21,3 +21,18 @@ impl Position {
         Self { x, y }
     }
 }
+
+/// Signals an actor's intent to move
+#[derive(Debug, Component)]
+pub struct WantsToMove {
+    pub dx: i32,
+    pub dy: i32,
+}
+
+/// Marks an entity that may take actions on each tick
+#[derive(Debug, Component, Default)]
+pub struct Actor;
+
+/// Marker component to indicate [Actor] that are taking a turn this game tick
+#[derive(Debug, Component)]
+pub struct TakingTurn;

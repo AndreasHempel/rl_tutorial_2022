@@ -1,13 +1,20 @@
 use bevy::prelude::*;
 use rand::prelude::*;
 
-use crate::{
-    actions::{Actor, TakingTurn, WantsToMove},
-    components::Monster,
-};
+use crate::components::{Actor, Monster, TakingTurn, WantsToMove};
+
+/// Bundles AI-related systems
+#[derive(Debug)]
+pub struct AIPlugin;
+
+impl Plugin for AIPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(monster_actors);
+    }
+}
 
 /// Moves monsters randomly across the screen
-pub fn monster_actors(
+fn monster_actors(
     monsters: Query<Entity, (With<Actor>, With<Monster>, With<TakingTurn>)>,
     mut commands: Commands,
 ) {
