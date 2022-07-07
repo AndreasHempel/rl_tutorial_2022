@@ -37,10 +37,14 @@ pub struct OutsideMapError;
 impl GameMap {
     /// Create a new, empty map with the given dimensions
     pub fn new(width: u32, height: u32) -> Self {
+        let size = (width * height) as usize;
+        if size == 0 {
+            panic!("Cannot create a map with dimensions {width} x {height}!");
+        }
         GameMap {
             width,
             height,
-            tiles: vec![TileType::Floor; (width * height) as usize],
+            tiles: vec![TileType::Floor; size],
         }
     }
 
@@ -112,21 +116,42 @@ mod tests {
         assert_eq!(map.idx_to_xy(usize::max_value()), Err(OutsideMapError));
     }
 
+    #[cfg(debug_assertions)]
     #[test]
     #[should_panic]
     fn test_map_too_large_1() {
         GameMap::new(u32::max_value(), 2);
     }
 
+    #[cfg(debug_assertions)]
     #[test]
     #[should_panic]
     fn test_map_too_large_2() {
         GameMap::new(u32::max_value() / 2, 3);
     }
 
+    #[cfg(debug_assertions)]
     #[test]
     #[should_panic]
     fn test_map_too_large_3() {
+        GameMap::new(65536, 65536);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_map_degenerate_1() {
+        GameMap::new(0, 10);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_map_degenerate_2() {
+        GameMap::new(100, 0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_map_too_large_release() {
         GameMap::new(65536, 65536);
     }
 }
