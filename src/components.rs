@@ -9,15 +9,15 @@ pub struct Player;
 #[derive(Component, Debug)]
 pub struct Monster;
 
-/// Position of an entity on the map
+/// Position of an entity on the map (always non-negative)
 #[derive(Component, Debug, Inspectable, Default)]
 pub struct Position {
-    pub x: i32,
-    pub y: i32,
+    pub x: u32,
+    pub y: u32,
 }
 
 impl Position {
-    pub fn new(x: i32, y: i32) -> Self {
+    pub fn new(x: u32, y: u32) -> Self {
         Self { x, y }
     }
 }

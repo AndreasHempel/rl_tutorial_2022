@@ -45,13 +45,13 @@ impl GameMap {
     }
 
     /// Transforms a linear index to the corresponding (x,y) position in the map
-    pub fn idx_to_xy(&self, idx: usize) -> Result<(i32, i32), OutsideMapError> {
+    pub fn idx_to_xy(&self, idx: usize) -> Result<(u32, u32), OutsideMapError> {
         if idx >= (self.width * self.height) as usize {
             return Err(OutsideMapError);
         }
         let x = idx % self.width as usize;
         let y = idx / self.width as usize;
-        Ok((x as i32, y as i32))
+        Ok((x as u32, y as u32))
     }
 
     /// Transforms an (x, y) position into the corresponding linear index for parts of the [GameMap]
@@ -92,5 +92,41 @@ mod tests {
         assert_eq!(map.xy_to_idx(3, 0), Err(OutsideMapError));
         assert_eq!(map.xy_to_idx(0, 4), Err(OutsideMapError));
         assert_eq!(map.xy_to_idx(13, 23), Err(OutsideMapError));
+    }
+
+    #[test]
+    fn test_idx_to_xy() {
+        let map = GameMap::new(3, 4);
+
+        assert_eq!(map.idx_to_xy(0), Ok((0, 0)));
+        assert_eq!(map.idx_to_xy(2), Ok((2, 0)));
+        assert_eq!(map.idx_to_xy(11), Ok((2, 3)));
+    }
+
+    #[test]
+    fn test_idx_to_xy_out_of_bounds() {
+        let map = GameMap::new(3, 4);
+
+        assert_eq!(map.idx_to_xy(12), Err(OutsideMapError));
+        assert_eq!(map.idx_to_xy(200), Err(OutsideMapError));
+        assert_eq!(map.idx_to_xy(usize::max_value()), Err(OutsideMapError));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_map_too_large_1() {
+        GameMap::new(u32::max_value(), 2);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_map_too_large_2() {
+        GameMap::new(u32::max_value() / 2, 3);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_map_too_large_3() {
+        GameMap::new(65536, 65536);
     }
 }

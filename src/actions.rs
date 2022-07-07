@@ -25,8 +25,16 @@ fn move_actors(
     chars
         .iter_mut()
         .map(|(e, mov, mut p)| {
-            p.x += mov.dx;
-            p.y += mov.dy;
+            if mov.dx >= 0 {
+                p.x += mov.dx as u32;
+            } else {
+                p.x -= mov.dx.abs() as u32;
+            }
+            if mov.dy.is_positive() {
+                p.y += mov.dy as u32;
+            } else {
+                p.y -= mov.dy.abs() as u32;
+            }
             commands
                 .entity(e)
                 .remove::<TakingTurn>()
