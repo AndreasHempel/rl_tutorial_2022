@@ -16,7 +16,9 @@ struct DebugPlugin;
 impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(WorldInspectorPlugin::new())
-            .register_inspectable::<components::Position>();
+            .register_inspectable::<components::Position>()
+            .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+            .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default());
     }
 }
 
@@ -24,6 +26,7 @@ fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins)
         .add_state(GameState::Ticking)
+        .add_plugin(map::MapPlugin)
         .add_plugin(render::RenderPlugin)
         .add_plugin(spawner::SpawningPlugin)
         .add_plugin(actions::ActionPlugin)
@@ -40,6 +43,7 @@ fn main() {
 mod actions;
 mod components;
 mod input_handler;
+mod map;
 mod monster_ai;
 mod render;
 mod spawner;

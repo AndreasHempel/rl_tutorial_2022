@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     components::{Actor, Monster, Player, Position},
+    map::{GameMap, TileType},
     render::TILE_SIZE,
 };
 
@@ -12,7 +13,8 @@ pub struct SpawningPlugin;
 impl Plugin for SpawningPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_player)
-            .add_startup_system(spawn_monster);
+            .add_startup_system(spawn_monster)
+            .add_startup_system(spawn_tiles);
     }
 }
 
@@ -39,7 +41,7 @@ fn setup_player(
             ..default()
         })
         .insert(Player)
-        .insert(Position::new(10, 10))
+        .insert(Position::new(18, 23))
         .insert(Actor::default());
 }
 
@@ -63,6 +65,58 @@ fn spawn_monster(
             ..default()
         })
         .insert(Monster)
-        .insert(Position::new(0, 0))
+        .insert(Position::new(20, 30))
         .insert(Actor::default());
+}
+
+/// Spawns an entity for each tile in the map and attaches the corresponding sprite
+/// TODO: Adding an entity per map tile (4000+) leads to a significant FPS drop in Debug mode with the `WorldInspectorPlugin`
+///         -> Determine if this can be improved with some trickery, is a fundamental limitation, or can be resolved by using a tile-map plugin
+fn spawn_tiles(
+    map: Res<GameMap>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+) {
+    let (floor_sprite, floor_atlas) = {
+        let floor_handle = asset_server.load("Dawnlike/Objects/Floor.png");
+        let floor_atlas =
+            TextureAtlas::from_grid(floor_handle, Vec2::new(SPRITE_SIZE, SPRITE_SIZE), 21, 39);
+        let floor_atlas_handle = texture_atlases.add(floor_atlas);
+        let mut sprite = TextureAtlasSprite::new(85);
+        sprite.custom_size = Some(Vec2::new(TILE_SIZE, TILE_SIZE));
+        (sprite, floor_atlas_handle)
+    };
+    let (wall_sprite, wall_atlas) = {
+        let wall_handle = asset_server.load("Dawnlike/Objects/Wall.png");
+        let wall_atlas =
+            TextureAtlas::from_grid(wall_handle, Vec2::new(SPRITE_SIZE, SPRITE_SIZE), 20, 51);
+        let wall_atlas_handle = texture_atlases.add(wall_atlas);
+        let mut sprite = TextureAtlasSprite::new(63);
+        sprite.custom_size = Some(Vec2::new(TILE_SIZE, TILE_SIZE));
+        (sprite, wall_atlas_handle)
+    };
+    for (idx, tile) in map.tiles.iter().enumerate() {
+        let (x, y) = map.idx_to_xy(idx).unwrap();
+        match tile {
+            TileType::Floor => commands
+                .spawn_bundle(SpriteSheetBundle {
+                    texture_atlas: floor_atlas.clone(),
+                    transform: Transform::from_scale(Vec3::splat(1.0)),
+                    sprite: floor_sprite.clone(),
+                    ..default()
+                })
+                .insert(Position::new(x, y))
+                .insert(tile.clone()),
+            TileType::Wall => commands
+                .spawn_bundle(SpriteSheetBundle {
+                    texture_atlas: wall_atlas.clone(),
+                    transform: Transform::from_scale(Vec3::splat(1.0)),
+                    sprite: wall_sprite.clone(),
+                    ..default()
+                })
+                .insert(Position::new(x, y))
+                .insert(tile.clone()),
+        };
+    }
 }
