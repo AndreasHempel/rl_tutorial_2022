@@ -14,6 +14,7 @@ impl Plugin for AIPlugin {
 }
 
 /// Moves monsters randomly across the screen
+#[allow(clippy::type_complexity)]
 fn monster_actors(
     monsters: Query<Entity, (With<Actor>, With<Monster>, With<TakingTurn>)>,
     mut commands: Commands,

@@ -37,7 +37,7 @@ fn setup_player(
         .spawn_bundle(SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
             transform: Transform::from_scale(Vec3::splat(1.0)),
-            sprite: sprite,
+            sprite,
             ..default()
         })
         .insert(Player)
@@ -61,7 +61,7 @@ fn spawn_monster(
         .spawn_bundle(SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
             transform: Transform::from_scale(Vec3::splat(1.0)),
-            sprite: sprite,
+            sprite,
             ..default()
         })
         .insert(Monster)
