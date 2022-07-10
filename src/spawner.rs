@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     components::{Actor, Monster, Player, Position},
-    map::{GameMap, TileType},
+    map::{GameMap, MapMetadata, TileType},
     render::TILE_SIZE,
 };
 
@@ -26,6 +26,7 @@ fn setup_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    map_metadata: Res<MapMetadata>,
 ) {
     let texture_handle = asset_server.load("Dawnlike/Characters/Pest0.png");
     let texture_atlas =
@@ -33,6 +34,8 @@ fn setup_player(
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let mut sprite = TextureAtlasSprite::new(59);
     sprite.custom_size = Some(Vec2::new(TILE_SIZE, TILE_SIZE));
+
+    let start = map_metadata.starting_position.unwrap();
     commands
         .spawn_bundle(SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
@@ -41,7 +44,7 @@ fn setup_player(
             ..default()
         })
         .insert(Player)
-        .insert(Position::new(18, 23))
+        .insert(Position::new(start.0, start.1))
         .insert(Actor::default());
 }
 
@@ -65,7 +68,7 @@ fn spawn_monster(
             ..default()
         })
         .insert(Monster)
-        .insert(Position::new(20, 30))
+        .insert(Position::new(30, 48))
         .insert(Actor::default());
 }
 
