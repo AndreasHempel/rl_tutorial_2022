@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::GameState;
 
 use crate::components::{Actor, Player, Position, TakingTurn, WantsToMove};
+use crate::map::{GameMap, TileType};
 
 /// Bundles all systems responsible for turn-based action management
 #[derive(Debug)]
@@ -19,28 +20,38 @@ impl Plugin for ActionPlugin {
 /// Updates the [Position] component of all moving actors
 fn move_actors(
     mut chars: Query<(Entity, &WantsToMove, &mut Position), With<TakingTurn>>,
+    map: Res<GameMap>,
     mut commands: Commands,
 ) {
     // Iterate over all actors that intend to move
-    chars
-        .iter_mut()
-        .map(|(e, mov, mut p)| {
-            if mov.dx >= 0 {
-                p.x += mov.dx as u32;
+    for (e, mov, mut p) in chars.iter_mut() {
+        let next = Position {
+            x: {
+                if mov.dx >= 0 {
+                    p.x + mov.dx as u32
+                } else {
+                    p.x - mov.dx.abs() as u32
+                }
+            },
+            y: {
+                if mov.dy.is_positive() {
+                    p.y + mov.dy as u32
+                } else {
+                    p.y - mov.dy.abs() as u32
+                }
+            },
+        };
+        if let Ok(idx) = map.xy_to_idx(next.x, next.y) {
+            if map.tiles[idx] == TileType::Floor {
+                *p = next;
+                commands.entity(e).remove::<TakingTurn>();
             } else {
-                p.x -= mov.dx.abs() as u32;
+                warn!("Cannot move {e:?} to tile {}, {}", next.x, next.y);
             }
-            if mov.dy.is_positive() {
-                p.y += mov.dy as u32;
-            } else {
-                p.y -= mov.dy.abs() as u32;
-            }
-            commands
-                .entity(e)
-                .remove::<TakingTurn>()
-                .remove::<WantsToMove>();
-        })
-        .count();
+        }
+        // Need to remove move intent component no matter what
+        commands.entity(e).remove::<WantsToMove>();
+    }
 }
 
 /// Marks all non-player actors to make their next move

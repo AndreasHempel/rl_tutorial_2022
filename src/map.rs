@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::map_builder;
+
 /// Available tile types
 #[derive(Debug, Clone, PartialEq, Component)]
 pub enum TileType {
@@ -7,11 +9,19 @@ pub enum TileType {
     Wall,
 }
 
-/// Represents the game Map
+/// Represents the concrete tile layout of the game Map
+#[derive(Debug, Clone)]
 pub struct GameMap {
     pub width: u32,
     pub height: u32,
     pub tiles: Vec<TileType>,
+}
+
+/// Contains abstract properties of a map that may determine the concrete tile layout
+#[derive(Debug, Clone, Default)]
+pub struct MapMetadata {
+    pub starting_position: Option<(u32, u32)>,
+    pub rooms: Option<Vec<map_builder::rect::Rect>>,
 }
 
 impl Default for GameMap {
@@ -44,8 +54,13 @@ impl GameMap {
         GameMap {
             width,
             height,
-            tiles: vec![TileType::Floor; size],
+            tiles: vec![TileType::Wall; size],
         }
+    }
+
+    /// Returns the total number of tiles in this [`GameMap`]
+    pub fn length(&self) -> usize {
+        (self.width as usize) * (self.height as usize)
     }
 
     /// Transforms a linear index to the corresponding (x,y) position in the map
@@ -59,7 +74,7 @@ impl GameMap {
     }
 
     /// Transforms an (x, y) position into the corresponding linear index for parts of the [GameMap]
-    fn xy_to_idx(&self, x: u32, y: u32) -> Result<usize, OutsideMapError> {
+    pub fn xy_to_idx(&self, x: u32, y: u32) -> Result<usize, OutsideMapError> {
         if x >= self.width || y >= self.height {
             return Err(OutsideMapError);
         }
@@ -71,7 +86,16 @@ pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(GameMap::default());
+        let builder = map_builder::BuilderChain::new();
+        let mut builder = builder.start_with(
+            // map_builder::cellular_builder::CellularAutomataBuilder::new(10, 0.4, vec![3, 4]),
+            map_builder::simple_map_builder::SimpleMapBuilder::new(10, 4, 12),
+        );
+        builder.with(map_builder::arbitrary_starting_point::ArbitraryStartingPoint::new());
+        let mut rng = rand::SeedableRng::seed_from_u64(4);
+        let (map, map_metadata) = builder.build_map(&mut rng);
+
+        app.insert_resource(map).insert_resource(map_metadata);
     }
 }
 

@@ -44,6 +44,7 @@ mod actions;
 mod components;
 mod input_handler;
 mod map;
+mod map_builder;
 mod monster_ai;
 mod render;
 mod spawner;
