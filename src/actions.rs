@@ -30,27 +30,32 @@ fn move_actors(
                 if mov.dx >= 0 {
                     p.x + mov.dx as u32
                 } else {
-                    p.x - mov.dx.abs() as u32
+                    p.x - mov.dx.unsigned_abs()
                 }
             },
             y: {
                 if mov.dy.is_positive() {
                     p.y + mov.dy as u32
                 } else {
-                    p.y - mov.dy.abs() as u32
+                    p.y - mov.dy.unsigned_abs()
                 }
             },
         };
         if let Ok(idx) = map.xy_to_idx(next.x, next.y) {
             if map.tiles[idx] == TileType::Floor {
                 *p = next;
-                commands.entity(e).remove::<TakingTurn>();
             } else {
                 warn!("Cannot move {e:?} to tile {}, {}", next.x, next.y);
             }
         }
-        // Need to remove move intent component no matter what
-        commands.entity(e).remove::<WantsToMove>();
+        // Remove move intent and turn taking components no matter what
+        // TODO: This is slightly incorrect since it means moving into a wall
+        // means skipping / losing a turn, but it avoids deadlocks in case the
+        // player moves into a wall and the GameState does not reset correctly
+        commands
+            .entity(e)
+            .remove::<WantsToMove>()
+            .remove::<TakingTurn>();
     }
 }
 

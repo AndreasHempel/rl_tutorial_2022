@@ -95,7 +95,7 @@ fn spawn_tiles(
         let wall_atlas =
             TextureAtlas::from_grid(wall_handle, Vec2::new(SPRITE_SIZE, SPRITE_SIZE), 20, 51);
         let wall_atlas_handle = texture_atlases.add(wall_atlas);
-        let mut sprite = TextureAtlasSprite::new(63);
+        let mut sprite = TextureAtlasSprite::new(243);
         sprite.custom_size = Some(Vec2::new(TILE_SIZE, TILE_SIZE));
         (sprite, wall_atlas_handle)
     };
