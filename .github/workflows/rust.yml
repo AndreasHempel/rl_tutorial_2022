@@ -49,7 +49,7 @@ jobs:
       if: ${{ matrix.build-type == 'debug' }}
       run: cargo fmt --all --check
     - name: Clippy
-      run: cargo clippy --no-deps ${{ matrix.build-flag }}
+      run: cargo clippy --no-deps ${{ matrix.build-flag }} -- -Dwarnings
     - name: Check licenses
       if: ${{ matrix.build-type == 'debug' }}
       run: cargo deny check licenses
