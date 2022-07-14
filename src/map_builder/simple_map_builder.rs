@@ -35,7 +35,7 @@ impl SimpleMapBuilder {
             let x = rng.gen_range(0..build_data.map.width - w - 1);
             let y = rng.gen_range(0..build_data.map.height - h - 1);
             let new_room = Rect::new(x, y, w, h);
-            let ok = !rooms.iter().any(|r| new_room.intersect(&r));
+            let ok = !rooms.iter().any(|r| new_room.intersect(r));
             if ok {
                 apply_room_to_map(&mut build_data.map, &new_room);
                 if !rooms.is_empty() {

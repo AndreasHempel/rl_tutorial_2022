@@ -24,23 +24,6 @@ pub struct MapMetadata {
     pub rooms: Option<Vec<map_builder::rect::Rect>>,
 }
 
-impl Default for GameMap {
-    fn default() -> Self {
-        let width = 80u32;
-        let height = 53u32;
-        let mut map = GameMap::new(width, height);
-        const WALL_TILES: [(u32, u32); 4] = [(13, 14), (14, 14), (15, 14), (18, 17)];
-        WALL_TILES
-            .iter()
-            .map(|(x, y)| {
-                let idx = map.xy_to_idx(*x, *y).unwrap();
-                map.tiles[idx] = TileType::Wall;
-            })
-            .count();
-        map
-    }
-}
-
 #[derive(Debug, PartialEq)]
 pub struct OutsideMapError;
 
@@ -82,15 +65,34 @@ impl GameMap {
     }
 }
 
-pub struct MapPlugin;
+pub struct MapPlugin {
+    pub builder: MapBuilder,
+}
+
+/// Available builder configs to choose from the command line
+#[derive(Debug, clap::ValueEnum, Clone)]
+pub enum MapBuilder {
+    Rooms,
+    Cellular,
+}
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         let builder = map_builder::BuilderChain::new();
-        let mut builder = builder.start_with(
-            // map_builder::cellular_builder::CellularAutomataBuilder::new(10, 0.4, vec![3, 4]),
-            map_builder::simple_map_builder::SimpleMapBuilder::new(10, 4, 12),
-        );
+        let mut builder = {
+            match self.builder {
+                MapBuilder::Rooms => builder.start_with(
+                    map_builder::simple_map_builder::SimpleMapBuilder::new(10, 4, 12),
+                ),
+                MapBuilder::Cellular => {
+                    builder.start_with(map_builder::cellular_builder::CellularAutomataBuilder::new(
+                        10,
+                        0.4,
+                        vec![0, 5, 6, 7, 8],
+                    ))
+                }
+            }
+        };
         builder.with(map_builder::arbitrary_starting_point::ArbitraryStartingPoint::new());
         let mut rng = rand::SeedableRng::seed_from_u64(4);
         let (map, map_metadata) = builder.build_map(&mut rng);
