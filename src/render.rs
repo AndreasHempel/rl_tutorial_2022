@@ -1,6 +1,9 @@
 use bevy::{prelude::*, render::camera::Camera2d};
 
-use crate::components::{Player, Position};
+use crate::{
+    components::{Player, Position, Viewshed},
+    map::{GameMap, TileType},
+};
 
 /// Bundles systems responsible for rendering
 #[derive(Debug)]
@@ -10,7 +13,8 @@ impl Plugin for RenderPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_camera)
             .add_system(place_characters)
-            .add_system(player_follow_camera);
+            .add_system(player_follow_camera)
+            .add_system(render_visibility);
     }
 }
 
@@ -39,5 +43,26 @@ fn player_follow_camera(
     for mut t in camera.iter_mut() {
         t.translation.x = (p_pos.x as f32) * TILE_SIZE;
         t.translation.y = (p_pos.y as f32) * TILE_SIZE;
+    }
+}
+
+fn render_visibility(
+    map: Res<GameMap>,
+    player: Query<&Viewshed, With<Player>>,
+    mut tiles: Query<(&Position, &TileType, &mut TextureAtlasSprite)>,
+) {
+    let player_view = player.single();
+    for (p, _, mut s) in tiles.iter_mut() {
+        if let Ok(idx) = map.xy_to_idx(p.x, p.y) {
+            if map.revealed[idx] {
+                if player_view.visible_tiles.contains(p) {
+                    s.color = Color::WHITE;
+                } else {
+                    s.color = Color::DARK_GRAY;
+                }
+            } else {
+                s.color = Color::BLACK;
+            }
+        }
     }
 }

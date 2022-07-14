@@ -53,7 +53,8 @@ fn main() {
         .add_plugin(spawner::SpawningPlugin)
         .add_plugin(actions::ActionPlugin)
         .add_plugin(monster_ai::AIPlugin)
-        .add_plugin(input_handler::KeyboardInputPlugin);
+        .add_plugin(input_handler::KeyboardInputPlugin)
+        .add_system(visibility::determine_visibility);
 
     #[cfg(debug_assertions)]
     app.add_plugin(DebugPlugin)
@@ -70,3 +71,4 @@ mod map_builder;
 mod monster_ai;
 mod render;
 mod spawner;
+mod visibility;

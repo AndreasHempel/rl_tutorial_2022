@@ -10,7 +10,7 @@ pub struct Player;
 pub struct Monster;
 
 /// Position of an entity on the map (always non-negative)
-#[derive(Component, Debug, Inspectable, Default)]
+#[derive(Component, Debug, Inspectable, Default, PartialEq)]
 pub struct Position {
     pub x: u32,
     pub y: u32,
@@ -36,3 +36,19 @@ pub struct Actor;
 /// Marker component to indicate [Actor] that are taking a turn this game tick
 #[derive(Debug, Component)]
 pub struct TakingTurn;
+
+/// Marks entities that have some form of vision
+#[derive(Debug, Component)]
+pub struct Viewshed {
+    pub visible_tiles: Vec<Position>,
+    pub range: u32,
+}
+
+impl Viewshed {
+    pub fn new(range: u32) -> Self {
+        Viewshed {
+            visible_tiles: Vec::new(),
+            range,
+        }
+    }
+}
