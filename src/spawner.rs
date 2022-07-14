@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::{Actor, Monster, Player, Position},
+    components::{Actor, Monster, Player, Position, Viewshed},
     map::{GameMap, MapMetadata, TileType},
     render::TILE_SIZE,
 };
@@ -45,6 +45,7 @@ fn setup_player(
         })
         .insert(Player)
         .insert(Position::new(start.0, start.1))
+        .insert(Viewshed::new(7))
         .insert(Actor::default());
 }
 
@@ -69,6 +70,7 @@ fn spawn_monster(
         })
         .insert(Monster)
         .insert(Position::new(30, 48))
+        .insert(Viewshed::new(7))
         .insert(Actor::default());
 }
 

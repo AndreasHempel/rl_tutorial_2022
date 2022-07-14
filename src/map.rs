@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::map_builder;
 
 /// Available tile types
-#[derive(Debug, Clone, PartialEq, Component)]
+#[derive(Debug, Clone, Copy, PartialEq, Component)]
 pub enum TileType {
     Floor,
     Wall,
@@ -15,6 +15,7 @@ pub struct GameMap {
     pub width: u32,
     pub height: u32,
     pub tiles: Vec<TileType>,
+    pub revealed: Vec<bool>,
 }
 
 /// Contains abstract properties of a map that may determine the concrete tile layout
@@ -38,6 +39,7 @@ impl GameMap {
             width,
             height,
             tiles: vec![TileType::Wall; size],
+            revealed: vec![false; size],
         }
     }
 
