@@ -69,6 +69,7 @@ impl GameMap {
 
 pub struct MapPlugin {
     pub builder: MapBuilder,
+    pub seed: u64,
 }
 
 /// Available builder configs to choose from the command line
@@ -96,7 +97,7 @@ impl Plugin for MapPlugin {
             }
         };
         builder.with(map_builder::arbitrary_starting_point::ArbitraryStartingPoint::new());
-        let mut rng = rand::SeedableRng::seed_from_u64(4);
+        let mut rng = rand::SeedableRng::seed_from_u64(self.seed);
         let (map, map_metadata) = builder.build_map(&mut rng);
 
         app.insert_resource(map).insert_resource(map_metadata);

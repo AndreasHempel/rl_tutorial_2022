@@ -58,7 +58,7 @@ fn render_visibility(
                 if player_view.visible_tiles.contains(p) {
                     s.color = Color::WHITE;
                 } else {
-                    s.color = Color::DARK_GRAY;
+                    s.color = Color::GRAY;
                 }
             } else {
                 s.color = Color::BLACK;

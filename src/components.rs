@@ -10,7 +10,7 @@ pub struct Player;
 pub struct Monster;
 
 /// Position of an entity on the map (always non-negative)
-#[derive(Component, Debug, Inspectable, Default, PartialEq)]
+#[derive(Component, Debug, Inspectable, Default, PartialEq, Clone, Copy)]
 pub struct Position {
     pub x: u32,
     pub y: u32,
