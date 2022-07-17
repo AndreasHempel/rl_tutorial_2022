@@ -117,9 +117,7 @@ pub fn compute_fov<F>(origin: &Position, is_blocking: F, max_distance: u32) -> V
 where
     F: Fn(Position) -> bool,
 {
-    let mut visible = Vec::new();
-
-    visible.push(*origin);
+    let mut visible = vec![*origin];
 
     for dir in [
         CardinalDirection::North,

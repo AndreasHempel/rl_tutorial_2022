@@ -52,3 +52,7 @@ impl Viewshed {
         }
     }
 }
+
+/// Marks entities that block tiles for movement
+#[derive(Debug, Component)]
+pub struct BlocksMovement;

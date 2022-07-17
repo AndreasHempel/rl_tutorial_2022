@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::map_builder;
+use crate::{
+    components::{BlocksMovement, Position},
+    map_builder,
+};
 
 /// Available tile types
 #[derive(Debug, Clone, Copy, PartialEq, Component)]
@@ -16,6 +19,8 @@ pub struct GameMap {
     pub height: u32,
     pub tiles: Vec<TileType>,
     pub revealed: Vec<bool>,
+    pub blocked: Vec<bool>,
+    pub tile_content: Vec<Vec<Entity>>,
 }
 
 /// Contains abstract properties of a map that may determine the concrete tile layout
@@ -40,6 +45,8 @@ impl GameMap {
             height,
             tiles: vec![TileType::Wall; size],
             revealed: vec![false; size],
+            blocked: vec![false; size],
+            tile_content: vec![Vec::new(); size],
         }
     }
 
@@ -64,6 +71,20 @@ impl GameMap {
             return Err(OutsideMapError);
         }
         Ok((self.width * y + x) as usize)
+    }
+
+    /// Marks all blocked tiles based on [`TileType`]
+    fn determine_blocked(&mut self) {
+        for (i, tile) in self.tiles.iter_mut().enumerate() {
+            self.blocked[i] = *tile == TileType::Wall;
+        }
+    }
+
+    /// Forgets all indexed entities
+    fn clear_content_index(&mut self) {
+        for content in self.tile_content.iter_mut() {
+            content.clear();
+        }
     }
 }
 
@@ -100,7 +121,29 @@ impl Plugin for MapPlugin {
         let mut rng = rand::SeedableRng::seed_from_u64(self.seed);
         let (map, map_metadata) = builder.build_map(&mut rng);
 
-        app.insert_resource(map).insert_resource(map_metadata);
+        app.insert_resource(map)
+            .insert_resource(map_metadata)
+            .add_system(index_map);
+    }
+}
+
+pub fn index_map(
+    mut map: ResMut<GameMap>,
+    things: Query<(Entity, &Position)>,
+    blockers: Query<&BlocksMovement>,
+) {
+    map.determine_blocked();
+    map.clear_content_index();
+    for (e, pos) in things.iter() {
+        let idx = map
+            .xy_to_idx(pos.x, pos.y)
+            .expect("Entity {e:?} has a position outside the map: {pos:?}");
+
+        if blockers.get(e).is_ok() {
+            map.blocked[idx] = true;
+        }
+
+        map.tile_content[idx].push(e);
     }
 }
 
