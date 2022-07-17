@@ -15,6 +15,10 @@ struct CLIArgs {
     /// What map builder to use
     #[clap(short = 'm', long = "map", value_enum, default_value = "rooms")]
     map_builder: map::MapBuilder,
+
+    /// Seed for map building RNG
+    #[clap(short = 's', long = "seed", default_value = "42")]
+    rng_seed: u64,
 }
 
 /// All possible game states
@@ -48,6 +52,7 @@ fn main() {
         .add_state(GameState::Ticking)
         .add_plugin(map::MapPlugin {
             builder: args.map_builder,
+            seed: args.rng_seed,
         })
         .add_plugin(render::RenderPlugin)
         .add_plugin(spawner::SpawningPlugin)

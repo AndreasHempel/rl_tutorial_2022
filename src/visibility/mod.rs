@@ -2,22 +2,13 @@ use bevy::prelude::*;
 
 use crate::{
     components::{Player, Position, Viewshed},
-    map::GameMap,
+    map::{GameMap, TileType},
 };
 
-fn compute_visible_tiles(position: &Position, range: u32) -> Vec<Position> {
-    let mut visible = Vec::new();
-    for i in -(range as i32)..(range as i32) {
-        for j in -(range as i32)..(range as i32) {
-            let t = Position {
-                x: (position.x as i32 + i) as u32,
-                y: (position.y as i32 + j) as u32,
-            };
-            visible.push(t);
-        }
-    }
-    visible
-}
+mod shadowcasting;
+mod square_xray;
+
+use shadowcasting::compute_fov;
 
 pub fn determine_visibility(
     mut viewers: Query<(Entity, &Position, &mut Viewshed)>,
@@ -27,7 +18,15 @@ pub fn determine_visibility(
     let player = player.single();
     for (e, pos, mut view) in viewers.iter_mut() {
         let range = view.range;
-        view.visible_tiles = compute_visible_tiles(pos, range);
+        let is_blocking = |pos: Position| {
+            if let Ok(idx) = map.xy_to_idx(pos.x, pos.y) {
+                map.tiles[idx] == TileType::Wall
+            } else {
+                // Consider tiles outside the map as walls
+                true
+            }
+        };
+        view.visible_tiles = compute_fov(pos, is_blocking, range);
 
         if e == player {
             for Position { x, y } in view.visible_tiles.iter() {
