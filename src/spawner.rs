@@ -2,7 +2,8 @@ use bevy::prelude::*;
 
 use crate::{
     components::{Actor, BlocksMovement, Monster, Player, Position, Viewshed},
-    map::{GameMap, MapMetadata, TileType},
+    map::{GameMap, TileType},
+    map_builder::{spawner::Spawnables, MapMetadata, SpawnList},
     render::TILE_SIZE,
 };
 
@@ -14,7 +15,8 @@ impl Plugin for SpawningPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_player)
             .add_startup_system(spawn_monster)
-            .add_startup_system(spawn_tiles);
+            .add_startup_system(spawn_tiles)
+            .add_startup_system(spawn_things);
     }
 }
 
@@ -48,6 +50,71 @@ fn setup_player(
         .insert(Viewshed::new(7))
         .insert(Actor::default())
         .insert(BlocksMovement);
+}
+
+/// Spawns everything from the generated [`SpawnList`]
+fn spawn_things(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    map_metadata: Res<MapMetadata>,
+) {
+    for ((x, y), s) in map_metadata.spawn_list.iter() {
+        use Spawnables::*;
+        match s {
+            TreasureChest => treasure(
+                Position::new(*x, *y),
+                &mut commands,
+                asset_server.as_ref(),
+                texture_atlases.as_mut(),
+            ),
+        }
+    }
+}
+
+fn treasure(
+    pos: Position,
+    commands: &mut Commands,
+    asset_server: &AssetServer,
+    texture_atlases: &mut Assets<TextureAtlas>,
+) {
+    let (sprite, atlas_handle) = get_sprite_handle(
+        "Dawnlike/Items/Chest0.png",
+        8,
+        3,
+        1,
+        asset_server,
+        texture_atlases,
+    );
+    commands
+        .spawn_bundle(SpriteSheetBundle {
+            texture_atlas: atlas_handle,
+            transform: Transform::from_scale(Vec3::splat(1.0)),
+            sprite,
+            ..default()
+        })
+        .insert(pos);
+}
+
+fn get_sprite_handle(
+    spritesheet_path: &str,
+    columns: usize,
+    rows: usize,
+    index: usize,
+    asset_server: &AssetServer,
+    texture_atlases: &mut Assets<TextureAtlas>,
+) -> (TextureAtlasSprite, Handle<TextureAtlas>) {
+    let texture_handle = asset_server.load(spritesheet_path);
+    let texture_atlas = TextureAtlas::from_grid(
+        texture_handle,
+        Vec2::new(SPRITE_SIZE, SPRITE_SIZE),
+        columns,
+        rows,
+    );
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    let mut sprite = TextureAtlasSprite::new(index);
+    sprite.custom_size = Some(Vec2::new(TILE_SIZE, TILE_SIZE));
+    (sprite, texture_atlas_handle)
 }
 
 /// Spawn a monster into the world
