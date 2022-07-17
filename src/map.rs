@@ -23,13 +23,6 @@ pub struct GameMap {
     pub tile_content: Vec<Vec<Entity>>,
 }
 
-/// Contains abstract properties of a map that may determine the concrete tile layout
-#[derive(Debug, Clone, Default)]
-pub struct MapMetadata {
-    pub starting_position: Option<(u32, u32)>,
-    pub rooms: Option<Vec<map_builder::rect::Rect>>,
-}
-
 #[derive(Debug, PartialEq)]
 pub struct OutsideMapError;
 
@@ -103,21 +96,35 @@ pub enum MapBuilder {
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         let builder = map_builder::BuilderChain::new();
-        let mut builder = {
+        let builder = {
             match self.builder {
-                MapBuilder::Rooms => builder.start_with(
-                    map_builder::simple_map_builder::SimpleMapBuilder::new(10, 4, 12),
-                ),
+                MapBuilder::Rooms => {
+                    let mut builder = builder.start_with(
+                        map_builder::simple_map_builder::SimpleMapBuilder::new(10, 4, 12),
+                    );
+                    builder.with(
+                        map_builder::room_based_builders::RoomBasedStartingPosition::new(
+                            map_builder::room_based_builders::RoomSelectionMode::Random,
+                            map_builder::room_based_builders::PositionSelectionMode::Random,
+                        ),
+                    );
+                    builder.with(map_builder::room_based_builders::RoomBasedSpawner::new(3));
+                    builder
+                }
                 MapBuilder::Cellular => {
-                    builder.start_with(map_builder::cellular_builder::CellularAutomataBuilder::new(
-                        10,
-                        0.4,
-                        vec![0, 5, 6, 7, 8],
-                    ))
+                    let mut builder = builder.start_with(
+                        map_builder::cellular_builder::CellularAutomataBuilder::new(
+                            10,
+                            0.4,
+                            vec![0, 5, 6, 7, 8],
+                        ),
+                    );
+                    builder
+                        .with(map_builder::arbitrary_starting_point::ArbitraryStartingPoint::new());
+                    builder
                 }
             }
         };
-        builder.with(map_builder::arbitrary_starting_point::ArbitraryStartingPoint::new());
         let mut rng = rand::SeedableRng::seed_from_u64(self.seed);
         let (map, map_metadata) = builder.build_map(&mut rng);
 

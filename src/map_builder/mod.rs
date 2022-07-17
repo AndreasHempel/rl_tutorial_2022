@@ -1,11 +1,16 @@
-use crate::map::{GameMap, MapMetadata};
+use std::collections::HashMap;
+
+use crate::map::GameMap;
 
 pub type MapRng = rand::rngs::StdRng;
 
 pub mod arbitrary_starting_point;
 pub mod cellular_builder;
+mod random_table;
 pub mod rect;
+pub mod room_based_builders;
 pub mod simple_map_builder;
+pub mod spawner;
 
 /// Combines abstract map properties, the concrete tile layout, and potentially a history of snapshots
 pub struct MapBuildData {
@@ -13,6 +18,16 @@ pub struct MapBuildData {
     metadata: MapMetadata,
     pub history: Vec<(GameMap, MapMetadata)>,
 }
+
+/// Contains abstract properties of a map that may determine the concrete tile layout and their contents
+#[derive(Debug, Clone, Default)]
+pub struct MapMetadata {
+    pub starting_position: Option<(u32, u32)>,
+    pub rooms: Option<Vec<rect::Rect>>,
+    pub spawn_list: SpawnList,
+}
+
+pub type SpawnList = HashMap<(u32, u32), spawner::Spawnables>;
 
 impl MapBuildData {
     /// Adds a snapshot of the current map state to the history

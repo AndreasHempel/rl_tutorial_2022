@@ -25,4 +25,12 @@ impl Rect {
     pub fn center(&self) -> (u32, u32) {
         ((self.x1 + self.x2) / 2, (self.y1 + self.y2) / 2)
     }
+
+    pub fn width(&self) -> u32 {
+        self.x2 - self.x1
+    }
+
+    pub fn height(&self) -> u32 {
+        self.y2 - self.y1
+    }
 }
