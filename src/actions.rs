@@ -2,8 +2,10 @@ use bevy::prelude::*;
 
 use crate::GameState;
 
-use crate::components::{Actor, Player, Position, TakingTurn, WantsToMove};
-use crate::map::{GameMap, TileType};
+use crate::{
+    components::{Actor, Player, Position, TakingTurn, WantsToMove},
+    map::GameMap,
+};
 
 /// Bundles all systems responsible for turn-based action management
 #[derive(Debug)]
@@ -42,7 +44,7 @@ fn move_actors(
             },
         };
         if let Ok(idx) = map.xy_to_idx(next.x, next.y) {
-            if map.tiles[idx] == TileType::Floor {
+            if !map.blocked[idx] {
                 *p = next;
             } else {
                 warn!("Cannot move {e:?} to tile {}, {}", next.x, next.y);

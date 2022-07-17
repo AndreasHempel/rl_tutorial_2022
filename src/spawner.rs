@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::{Actor, Monster, Player, Position, Viewshed},
+    components::{Actor, BlocksMovement, Monster, Player, Position, Viewshed},
     map::{GameMap, MapMetadata, TileType},
     render::TILE_SIZE,
 };
@@ -46,7 +46,8 @@ fn setup_player(
         .insert(Player)
         .insert(Position::new(start.0, start.1))
         .insert(Viewshed::new(7))
-        .insert(Actor::default());
+        .insert(Actor::default())
+        .insert(BlocksMovement);
 }
 
 /// Spawn a monster into the world
@@ -69,9 +70,10 @@ fn spawn_monster(
             ..default()
         })
         .insert(Monster)
-        .insert(Position::new(30, 48))
+        .insert(Position::new(34, 46))
         .insert(Viewshed::new(7))
-        .insert(Actor::default());
+        .insert(Actor::default())
+        .insert(BlocksMovement);
 }
 
 /// Spawns an entity for each tile in the map and attaches the corresponding sprite
@@ -112,7 +114,7 @@ fn spawn_tiles(
                     ..default()
                 })
                 .insert(Position::new(x, y))
-                .insert(tile.clone()),
+                .insert(*tile),
             TileType::Wall => commands
                 .spawn_bundle(SpriteSheetBundle {
                     texture_atlas: wall_atlas.clone(),
@@ -121,7 +123,7 @@ fn spawn_tiles(
                     ..default()
                 })
                 .insert(Position::new(x, y))
-                .insert(tile.clone()),
+                .insert(*tile),
         };
     }
 }

@@ -14,7 +14,8 @@ impl Plugin for RenderPlugin {
         app.add_startup_system(setup_camera)
             .add_system(place_characters)
             .add_system(player_follow_camera)
-            .add_system(render_visibility);
+            .add_system(render_map)
+            .add_system(render_creatures);
     }
 }
 
@@ -26,7 +27,7 @@ fn setup_camera(mut commands: Commands) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 }
 
-/// Updates the screen coordinates ([Transform]) based on an entity's [Position]
+/// Updates the screen coordinates ([`Transform`]) based on an entity's [`Position`]
 fn place_characters(mut chars: Query<(&Position, &mut Transform), Changed<Position>>) {
     for (p, mut t) in chars.iter_mut() {
         t.translation.x = (p.x as f32) * TILE_SIZE;
@@ -34,7 +35,7 @@ fn place_characters(mut chars: Query<(&Position, &mut Transform), Changed<Positi
     }
 }
 
-/// Updates the camera [Transform] to always point at the [Player]
+/// Updates the camera [`Transform`] to always point at the [`Player`]
 fn player_follow_camera(
     player: Query<&Position, With<Player>>,
     mut camera: Query<&mut Transform, With<Camera2d>>,
@@ -46,7 +47,8 @@ fn player_follow_camera(
     }
 }
 
-fn render_visibility(
+/// Sets rendering properties for tiles of the [`GameMap`]
+fn render_map(
     map: Res<GameMap>,
     player: Query<&Viewshed, With<Player>>,
     mut tiles: Query<(&Position, &TileType, &mut TextureAtlasSprite)>,
@@ -62,6 +64,22 @@ fn render_visibility(
                 }
             } else {
                 s.color = Color::BLACK;
+            }
+        }
+    }
+}
+
+/// Sets creatures that are outside the [`Player`'s](Player) viewshed invisible
+pub fn render_creatures(
+    view: Query<&Viewshed, With<Player>>,
+    mut objects: Query<(&mut Visibility, &Position), Without<TileType>>,
+) {
+    for view in view.iter() {
+        for (mut visible, p) in objects.iter_mut() {
+            if view.visible_tiles.contains(p) {
+                visible.is_visible = true;
+            } else {
+                visible.is_visible = false;
             }
         }
     }
