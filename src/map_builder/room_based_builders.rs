@@ -1,6 +1,10 @@
 use rand::Rng;
 
-use super::{rect::Rect, spawner::fill_room, MapBuildData, MapModifier, MapRng, SpawnList};
+use super::{
+    rect::Rect,
+    spawner::{fill_room, Spawnables},
+    MapBuildData, MapModifier, MapRng, SpawnList,
+};
 
 const ROOMS_REQUIRED_ERROR: &str =
     "Room based spawning requires rooms to have been generated first!";
@@ -14,11 +18,10 @@ impl RoomBasedSpawner {
         Box::new(RoomBasedSpawner { max_spawns })
     }
 
-    fn spawn(&mut self, rng: &mut MapRng, rooms: &Vec<Rect>) -> SpawnList {
+    fn spawn(&mut self, rng: &mut MapRng, rooms: &[Rect]) -> SpawnList {
         rooms
             .iter()
-            .map(|room| fill_room(rng, room, self.max_spawns))
-            .flatten()
+            .flat_map(|room| fill_room(rng, room, self.max_spawns))
             .collect()
     }
 }
@@ -39,6 +42,8 @@ impl MapModifier for RoomBasedSpawner {
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
+/// TODO: Remove this lint-silencing once a use for [`RoomSelectionMode::Random`] has been found
+#[allow(dead_code)]
 pub enum RoomSelectionMode {
     First,
     Last,
@@ -51,17 +56,15 @@ pub enum PositionSelectionMode {
     Random,
 }
 
+/// Select the player's starting position from one of the available rooms
 pub struct RoomBasedStartingPosition {
     room_mode: RoomSelectionMode,
     pos_mode: PositionSelectionMode,
 }
 
 impl RoomBasedStartingPosition {
-    pub fn new(
-        room_mode: RoomSelectionMode,
-        pos_mode: PositionSelectionMode,
-    ) -> Box<RoomBasedStartingPosition> {
-        Box::new(RoomBasedStartingPosition {
+    pub fn new(room_mode: RoomSelectionMode, pos_mode: PositionSelectionMode) -> Box<Self> {
+        Box::new(Self {
             room_mode,
             pos_mode,
         })
@@ -76,8 +79,45 @@ impl MapModifier for RoomBasedStartingPosition {
             .as_ref()
             .expect(ROOMS_REQUIRED_ERROR);
         let start_room = select_room(&self.room_mode, rooms, rng);
+        // FIXME: This can select the same tile as another spawning MapModifier
         let start_pos = select_position(&self.pos_mode, start_room, rng);
         build_data.metadata.starting_position = Some(start_pos);
+        build_data.take_snapshot();
+    }
+}
+
+/// Select the player's starting position from one of the available rooms
+pub struct RoomBasedObjectiveSpawner {
+    room_mode: RoomSelectionMode,
+    pos_mode: PositionSelectionMode,
+    objective: Spawnables,
+}
+
+impl RoomBasedObjectiveSpawner {
+    pub fn new(
+        room_mode: RoomSelectionMode,
+        pos_mode: PositionSelectionMode,
+        objective: Spawnables,
+    ) -> Box<Self> {
+        Box::new(Self {
+            room_mode,
+            pos_mode,
+            objective,
+        })
+    }
+}
+
+impl MapModifier for RoomBasedObjectiveSpawner {
+    fn modify_map(&mut self, rng: &mut MapRng, build_data: &mut MapBuildData) {
+        let rooms = build_data
+            .metadata
+            .rooms
+            .as_ref()
+            .expect(ROOMS_REQUIRED_ERROR);
+        let room = select_room(&self.room_mode, rooms, rng);
+        // FIXME: This can select the same tile as another spawning MapModifier
+        let pos = select_position(&self.pos_mode, room, rng);
+        build_data.metadata.spawn_list.insert(pos, self.objective);
         build_data.take_snapshot();
     }
 }
