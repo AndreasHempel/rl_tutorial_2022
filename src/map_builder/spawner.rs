@@ -1,15 +1,19 @@
 use rand::Rng;
+use std::collections::hash_map::Entry;
 
 use super::{random_table::RandomTable, rect::Rect, MapRng, SpawnList};
 
+/// All things that can be spawned onto a map
 #[derive(Clone, Copy, Debug)]
 pub enum Spawnables {
+    /// Used to mark spawn positions that are already blocked, e.g. player start positions
     TreasureChest,
+    Turtle,
 }
 
 fn spawn_table() -> RandomTable<Spawnables> {
     use Spawnables::*;
-    RandomTable::new().add(TreasureChest, 10)
+    RandomTable::new().add(Turtle, 10)
 }
 
 pub fn fill_room(rng: &mut MapRng, room: &Rect, max_spawns: u32) -> SpawnList {
@@ -38,8 +42,8 @@ pub fn fill_region(rng: &mut MapRng, region: &[(u32, u32)], max_spawns: u32) -> 
             while !added && tries < 20 {
                 let idx = rng.gen_range(0..region.len());
                 let pos = region[idx];
-                if !spawn_points.contains_key(&pos) {
-                    spawn_points.insert(pos, spawn_table.roll(rng).unwrap());
+                if let Entry::Vacant(e) = spawn_points.entry(pos) {
+                    e.insert(spawn_table.roll(rng).unwrap());
                     added = true;
                 } else {
                     tries += 1;

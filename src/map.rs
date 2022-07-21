@@ -95,32 +95,44 @@ pub enum MapBuilder {
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        let builder = map_builder::BuilderChain::new();
+        use map_builder::{
+            arbitrary_starting_point::ArbitraryStartingPoint,
+            cellular_builder::CellularAutomataBuilder,
+            general_objective_spawner::GeneralObjectiveSpawner,
+            room_based_builders::{
+                PositionSelectionMode, RoomBasedObjectiveSpawner, RoomBasedSpawner,
+                RoomBasedStartingPosition, RoomSelectionMode,
+            },
+            simple_map_builder::SimpleMapBuilder,
+            spawner::Spawnables,
+            BuilderChain,
+        };
+
+        let builder = BuilderChain::new();
         let builder = {
             match self.builder {
                 MapBuilder::Rooms => {
-                    let mut builder = builder.start_with(
-                        map_builder::simple_map_builder::SimpleMapBuilder::new(10, 4, 12),
-                    );
-                    builder.with(
-                        map_builder::room_based_builders::RoomBasedStartingPosition::new(
-                            map_builder::room_based_builders::RoomSelectionMode::Random,
-                            map_builder::room_based_builders::PositionSelectionMode::Random,
-                        ),
-                    );
-                    builder.with(map_builder::room_based_builders::RoomBasedSpawner::new(3));
+                    let mut builder = builder.start_with(SimpleMapBuilder::new(10, 4, 12));
+                    builder.with(RoomBasedStartingPosition::new(
+                        RoomSelectionMode::First,
+                        PositionSelectionMode::Center,
+                    ));
+                    builder.with(RoomBasedSpawner::new(1));
+                    builder.with(RoomBasedObjectiveSpawner::new(
+                        RoomSelectionMode::Last,
+                        PositionSelectionMode::Random,
+                        Spawnables::TreasureChest,
+                    ));
                     builder
                 }
                 MapBuilder::Cellular => {
-                    let mut builder = builder.start_with(
-                        map_builder::cellular_builder::CellularAutomataBuilder::new(
-                            10,
-                            0.4,
-                            vec![0, 5, 6, 7, 8],
-                        ),
-                    );
-                    builder
-                        .with(map_builder::arbitrary_starting_point::ArbitraryStartingPoint::new());
+                    let mut builder = builder.start_with(CellularAutomataBuilder::new(
+                        10,
+                        0.4,
+                        vec![0, 5, 6, 7, 8],
+                    ));
+                    builder.with(ArbitraryStartingPoint::new());
+                    builder.with(GeneralObjectiveSpawner::new(Spawnables::TreasureChest));
                     builder
                 }
             }

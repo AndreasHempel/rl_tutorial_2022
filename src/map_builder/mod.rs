@@ -6,6 +6,7 @@ pub type MapRng = rand::rngs::StdRng;
 
 pub mod arbitrary_starting_point;
 pub mod cellular_builder;
+pub mod general_objective_spawner;
 mod random_table;
 pub mod rect;
 pub mod room_based_builders;

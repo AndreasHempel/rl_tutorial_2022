@@ -22,6 +22,18 @@ impl Plugin for RenderPlugin {
 /// Size of each tile for rendering
 pub const TILE_SIZE: f32 = 32.0;
 
+/// Z-buffer plane for player entities
+pub const ZBUF_PLAYER: f32 = 1.0;
+
+/// Z-buffer plane for moving entities (creatures...)
+pub const ZBUF_CREATURES: f32 = 1.0;
+
+/// Z-buffer plane for static entities (items...)
+pub const ZBUF_ITEMS: f32 = 1.0;
+
+/// Z-buffer plane for map tiles
+pub const ZBUF_TILES: f32 = 0.0;
+
 /// Spawn a camera for rendering
 fn setup_camera(mut commands: Commands) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());

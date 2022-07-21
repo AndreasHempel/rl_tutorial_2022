@@ -3,8 +3,8 @@ use bevy::prelude::*;
 use crate::{
     components::{Actor, BlocksMovement, Monster, Player, Position, Viewshed},
     map::{GameMap, TileType},
-    map_builder::{spawner::Spawnables, MapMetadata, SpawnList},
-    render::TILE_SIZE,
+    map_builder::{spawner::Spawnables, MapMetadata},
+    render::{TILE_SIZE, ZBUF_CREATURES, ZBUF_ITEMS, ZBUF_PLAYER, ZBUF_TILES},
 };
 
 /// Bundles spawning functions into a single plugin
@@ -14,7 +14,6 @@ pub struct SpawningPlugin;
 impl Plugin for SpawningPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_player)
-            .add_startup_system(spawn_monster)
             .add_startup_system(spawn_tiles)
             .add_startup_system(spawn_things);
     }
@@ -41,7 +40,7 @@ fn setup_player(
     commands
         .spawn_bundle(SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
-            transform: Transform::from_scale(Vec3::splat(1.0)),
+            transform: Transform::from_translation(Vec3::Z * ZBUF_PLAYER),
             sprite,
             ..default()
         })
@@ -68,6 +67,12 @@ fn spawn_things(
                 asset_server.as_ref(),
                 texture_atlases.as_mut(),
             ),
+            Turtle => turtle(
+                Position::new(*x, *y),
+                &mut commands,
+                asset_server.as_ref(),
+                texture_atlases.as_mut(),
+            ),
         }
     }
 }
@@ -78,32 +83,57 @@ fn treasure(
     asset_server: &AssetServer,
     texture_atlases: &mut Assets<TextureAtlas>,
 ) {
-    let (sprite, atlas_handle) = get_sprite_handle(
-        "Dawnlike/Items/Chest0.png",
-        8,
-        3,
-        1,
-        asset_server,
-        texture_atlases,
-    );
     commands
         .spawn_bundle(SpriteSheetBundle {
-            texture_atlas: atlas_handle,
-            transform: Transform::from_scale(Vec3::splat(1.0)),
-            sprite,
+            texture_atlas: get_texture_atlas_handle(
+                "Dawnlike/Items/Chest0.png",
+                8,
+                3,
+                asset_server,
+                texture_atlases,
+            ),
+            transform: Transform::from_translation(Vec3::Z * ZBUF_ITEMS),
+            sprite: get_sprite(1),
             ..default()
         })
         .insert(pos);
 }
 
-fn get_sprite_handle(
+fn turtle(
+    pos: Position,
+    commands: &mut Commands,
+    asset_server: &AssetServer,
+    texture_atlases: &mut Assets<TextureAtlas>,
+) {
+    commands
+        .spawn_bundle(SpriteSheetBundle {
+            texture_atlas: get_texture_atlas_handle(
+                "Dawnlike/Characters/Reptile0.png",
+                8,
+                13,
+                asset_server,
+                texture_atlases,
+            ),
+            transform: Transform::from_translation(Vec3::Z * ZBUF_CREATURES),
+            sprite: get_sprite(88),
+            ..default()
+        })
+        .insert(pos)
+        .insert(Monster)
+        .insert(pos)
+        .insert(Viewshed::new(7))
+        .insert(Actor::default())
+        .insert(BlocksMovement);
+}
+
+/// Load the specified spritesheet at return a handle to the resulting [`TextureAtlas`]
+fn get_texture_atlas_handle(
     spritesheet_path: &str,
     columns: usize,
     rows: usize,
-    index: usize,
     asset_server: &AssetServer,
     texture_atlases: &mut Assets<TextureAtlas>,
-) -> (TextureAtlasSprite, Handle<TextureAtlas>) {
+) -> Handle<TextureAtlas> {
     let texture_handle = asset_server.load(spritesheet_path);
     let texture_atlas = TextureAtlas::from_grid(
         texture_handle,
@@ -111,36 +141,14 @@ fn get_sprite_handle(
         columns,
         rows,
     );
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
-    let mut sprite = TextureAtlasSprite::new(index);
-    sprite.custom_size = Some(Vec2::new(TILE_SIZE, TILE_SIZE));
-    (sprite, texture_atlas_handle)
+    texture_atlases.add(texture_atlas)
 }
 
-/// Spawn a monster into the world
-fn spawn_monster(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-) {
-    let texture_handle = asset_server.load("Dawnlike/Characters/Demon0.png");
-    let texture_atlas =
-        TextureAtlas::from_grid(texture_handle, Vec2::new(SPRITE_SIZE, SPRITE_SIZE), 8, 9);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
-    let mut sprite = TextureAtlasSprite::new(3);
+/// Build a properly sized [`TextureAtlasSprite`] with the given index
+fn get_sprite(index: usize) -> TextureAtlasSprite {
+    let mut sprite = TextureAtlasSprite::new(index);
     sprite.custom_size = Some(Vec2::new(TILE_SIZE, TILE_SIZE));
-    commands
-        .spawn_bundle(SpriteSheetBundle {
-            texture_atlas: texture_atlas_handle,
-            transform: Transform::from_scale(Vec3::splat(1.0)),
-            sprite,
-            ..default()
-        })
-        .insert(Monster)
-        .insert(Position::new(34, 46))
-        .insert(Viewshed::new(7))
-        .insert(Actor::default())
-        .insert(BlocksMovement);
+    sprite
 }
 
 /// Spawns an entity for each tile in the map and attaches the corresponding sprite
@@ -176,7 +184,7 @@ fn spawn_tiles(
             TileType::Floor => commands
                 .spawn_bundle(SpriteSheetBundle {
                     texture_atlas: floor_atlas.clone(),
-                    transform: Transform::from_scale(Vec3::splat(1.0)),
+                    transform: Transform::from_translation(Vec3::Z * ZBUF_TILES),
                     sprite: floor_sprite.clone(),
                     ..default()
                 })
@@ -185,7 +193,7 @@ fn spawn_tiles(
             TileType::Wall => commands
                 .spawn_bundle(SpriteSheetBundle {
                     texture_atlas: wall_atlas.clone(),
-                    transform: Transform::from_scale(Vec3::splat(1.0)),
+                    transform: Transform::from_translation(Vec3::Z * ZBUF_TILES),
                     sprite: wall_sprite.clone(),
                     ..default()
                 })
