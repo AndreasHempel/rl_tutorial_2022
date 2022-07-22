@@ -24,6 +24,7 @@ This initial implementation has the following "features":
 - Field of vision computation based on symmetric shadow casting
 - Spawn a limited number of monsters on the map and have them wander across the map randomly
 - Spawn a single treasure chest per map
+- Monsters may be pushed out of the way as a simple substitute for combat
 
 This encompasses the core features up to and including part 5 (sans the 'melee combat' part) of the [`libtcod` tutorial](https://rogueliketutorials.com/tutorials/tcod/v2/part-5/).
 

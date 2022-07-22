@@ -51,7 +51,7 @@ fn setup_player(
         .insert(BlocksMovement);
 }
 
-/// Spawns everything from the generated [`SpawnList`]
+/// Spawns everything from the generated [`SpawnList`](crate::map_builder::SpawnList)
 fn spawn_things(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
