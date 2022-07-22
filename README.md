@@ -9,21 +9,25 @@ An attempt at building a basic but complete roguelike in Rust using the [Bevy](h
 ## Fundamental design decisions
 
 The foremost goal is to complete the challenge which means I will try to stick to basic, fundamental features. I will need to remind myself repeatedly to not get lost in some cool extra feature or fancy implementation. Hence, the first version of this will be a tile-based, 2D roguelike with turn-based actions. That said, I will diverge from the `libtcod` tutorial in a few major ways:
-- Using sprites instead of ASCII / console graphics - I prefer (marginally) nicer aesthetics and want to learn working with sprites.
-- Using Bevy's ECS (Entity, Components, Systems) implementation instead of rolling my own game loop - I want to learn ECS-based games programming (although I realize it may not be a great fit for a turn-based game).
-- Using Rust instead of Python - because I prefer strongly-typed languages and Rust is fun!
+- Using **sprites instead of ASCII** / console graphics - I prefer (marginally) nicer aesthetics and want to learn working with sprites.
+- Using **Bevy's ECS** (Entity, Components, Systems) implementation instead of rolling my own game loop - I want to learn ECS-based games programming (although I realize it may not be a great fit for a turn-based game).
+- Using **Rust instead of Python** - because I prefer strongly-typed languages and Rust is fun!
 
-I may be adding to this list as time goes on.
+Further decisions taken while working on the game:
+- Experiment with a **combatless design** - NPCs will not fight the player but rather serve as mobile obstacles, potentially throwing other wrenches their way, e.g. having the player skip turns. This decision is primarily driven by my four year old son being interested in what I am doing. I want him to be able to thoroughly enjoy the game and play around with it without having to worry about child-appropriate absence or representations of combat. I am considering adding a countdown mechanic instead where the goal is to reach a treasure chest in a level before a time runs out. Instead of combat-focused abilities, spells can serve exploration (clairvoyance), mobility (teleport), or tactical (push hindering monsters out of the way) goals. 
 
 ## State of the game
 
 This initial implementation has the following "features":
-- Spawn a player and a monster entity on the screen
-- Allow the player to move around using arrow keys
-- Have the monster randomly wander across the screen
-- No obstacles exist, yet, and no collision checking is being performed
+- Build a map made up of room and corridors or based on cellular automata (selectable via CLI parameter)
+- Spawn a player on the screen and llow the player to move around using arrow keys
+- Field of vision computation based on symmetric shadow casting
+- Spawn a limited number of monsters on the map and have them wander across the map randomly
+- Spawn a single treasure chest per map
 
-This encompasses the core features from parts 1 and 2 of the `libtcod` tutorial.
+This encompasses the core features up to and including part 5 (sans the 'melee combat' part) of the [`libtcod` tutorial](https://rogueliketutorials.com/tutorials/tcod/v2/part-5/).
+
+![The player character next to the goal treasure chest](journal/sotg_2022-07-22.png "Player character next to the treasure chest")
 
 # Attributions and thanks
 
