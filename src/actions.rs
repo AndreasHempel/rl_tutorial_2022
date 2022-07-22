@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::GameState;
 
+use crate::motion_resolver::{MotionResolver, MoveAttempt};
 use crate::{
     components::{Actor, Player, Position, TakingTurn, WantsToMove},
     map::GameMap,
@@ -21,42 +22,35 @@ impl Plugin for ActionPlugin {
 
 /// Updates the [Position] component of all moving actors
 fn move_actors(
-    mut chars: Query<(Entity, &WantsToMove, &mut Position), With<TakingTurn>>,
-    map: Res<GameMap>,
+    movers: Query<(Entity, &WantsToMove), With<TakingTurn>>,
+    mut chars: Query<&mut Position>,
+    mut map: ResMut<GameMap>,
     mut commands: Commands,
 ) {
     // Iterate over all actors that intend to move
-    for (e, mov, mut p) in chars.iter_mut() {
-        let next = Position {
-            x: {
-                if mov.dx >= 0 {
-                    p.x + mov.dx as u32
-                } else {
-                    p.x - mov.dx.unsigned_abs()
-                }
+    for (e, mov) in movers.iter() {
+        let p = chars.get(e).unwrap();
+
+        let resolver = MotionResolver::default();
+        if let Ok(next_pos) = resolver.resolve(
+            MoveAttempt {
+                entity: e,
+                from: *p,
+                dx: mov.dx,
+                dy: mov.dy,
             },
-            y: {
-                if mov.dy.is_positive() {
-                    p.y + mov.dy as u32
+            map.as_mut(),
+        ) {
+            for (e, next) in next_pos {
+                if let Ok(mut p) = chars.get_mut(e) {
+                    *p = next;
                 } else {
-                    p.y - mov.dy.unsigned_abs()
+                    warn!("Cannot find position of {e:?} to move it to {next:?}!");
                 }
-            },
-        };
-        if let Ok(idx) = map.xy_to_idx(next.x, next.y) {
-            // FIXME: This check is based on last turn's state of the map, meaning multiple characters
-            // may move successfully onto the same tile. Possible solution: double buffering the state
-            // of the world (see http://gameprogrammingpatterns.com/double-buffer.html#not-just-for-graphics)
-            if !map.blocked[idx] {
-                *p = next;
-            } else {
-                warn!("Cannot move {e:?} to tile {}, {}", next.x, next.y);
             }
+        } else {
+            warn!("Could not move {e:?} from {p:?} by ({mov:?})");
         }
-        // Remove move intent and turn taking components no matter what
-        // TODO: This is slightly incorrect since it means moving into a wall
-        // means skipping / losing a turn, but it avoids deadlocks in case the
-        // player moves into a wall and the GameState does not reset correctly
         commands
             .entity(e)
             .remove::<WantsToMove>()
