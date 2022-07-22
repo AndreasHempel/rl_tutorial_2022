@@ -23,10 +23,10 @@ impl Plugin for RenderPlugin {
 pub const TILE_SIZE: f32 = 32.0;
 
 /// Z-buffer plane for player entities
-pub const ZBUF_PLAYER: f32 = 1.0;
+pub const ZBUF_PLAYER: f32 = 10.0;
 
 /// Z-buffer plane for moving entities (creatures...)
-pub const ZBUF_CREATURES: f32 = 1.0;
+pub const ZBUF_CREATURES: f32 = 5.0;
 
 /// Z-buffer plane for static entities (items...)
 pub const ZBUF_ITEMS: f32 = 1.0;

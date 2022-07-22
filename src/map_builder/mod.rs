@@ -10,6 +10,7 @@ pub mod cull_unreachable;
 pub mod general_objective_spawner;
 mod random_table;
 pub mod rect;
+pub mod region_based_builders;
 pub mod room_based_builders;
 pub mod simple_map_builder;
 pub mod spawner;
@@ -21,11 +22,18 @@ pub struct MapBuildData {
     pub history: Vec<(GameMap, MapMetadata)>,
 }
 
+/// Represents a region of related tiles, e.g. to spawn monsters together in their lair
+/// Does not have to be a particular geometric shape (unlike a 'room' which for now is
+/// limited to be a [`Rect`](rect::Rect))
+/// Uses a simple type alias for now
+pub type Region = Vec<(u32, u32)>;
+
 /// Contains abstract properties of a map that may determine the concrete tile layout and their contents
 #[derive(Debug, Clone, Default)]
 pub struct MapMetadata {
     pub starting_position: Option<(u32, u32)>,
     pub rooms: Option<Vec<rect::Rect>>,
+    pub regions: Option<Vec<Region>>,
     pub spawn_list: SpawnList,
 }
 
