@@ -17,6 +17,8 @@ pub struct GameMap {
     pub tiles: Vec<TileType>,
     pub revealed: Vec<bool>,
     pub blocked: Vec<bool>,
+    /// Lists the [Entities](Entity) which are blocking the corresponding tile
+    pub blocked_by: Vec<Option<Entity>>,
     pub tile_content: Vec<Vec<Entity>>,
 }
 
@@ -37,6 +39,7 @@ impl GameMap {
             revealed: vec![false; size],
             blocked: vec![false; size],
             tile_content: vec![Vec::new(); size],
+            blocked_by: vec![None; size],
         }
     }
 
@@ -67,6 +70,7 @@ impl GameMap {
     fn determine_blocked(&mut self) {
         for (i, tile) in self.tiles.iter_mut().enumerate() {
             self.blocked[i] = *tile == TileType::Wall;
+            self.blocked_by[i] = None;
         }
     }
 
@@ -74,6 +78,35 @@ impl GameMap {
     fn clear_content_index(&mut self) {
         for content in self.tile_content.iter_mut() {
             content.clear();
+        }
+    }
+
+    /// Updates a maps state by moving an entity. Panics if the given positions are illegal
+    /// or the entity ID is unknown in the original tile. Also performs no checks if the target
+    /// tile is blocking motion or not.
+    pub fn move_entity_unchecked(
+        &mut self,
+        (x1, y1): (u32, u32),
+        (x2, y2): (u32, u32),
+        entity: Entity,
+    ) {
+        let from_idx = self
+            .xy_to_idx(x1, y1)
+            .expect("Original position outside map.");
+        let to_idx = self.xy_to_idx(x2, y2).expect("Goal position outside map.");
+        let in_vec_idx = self.tile_content[from_idx]
+            .iter()
+            .position(|e| e == &entity)
+            .expect("Entity not found in original tile.");
+        let e = self.tile_content[from_idx].swap_remove(in_vec_idx);
+        self.tile_content[to_idx].push(e);
+        if Some(e) == self.blocked_by[from_idx] {
+            // The moving entity is blocking its current tile
+            self.blocked[from_idx] = false;
+            self.blocked_by[from_idx] = None;
+
+            self.blocked[to_idx] = true;
+            self.blocked_by[to_idx] = Some(e);
         }
     }
 }
@@ -153,7 +186,7 @@ impl Plugin for MapPlugin {
     }
 }
 
-pub fn index_map(
+fn index_map(
     mut map: ResMut<GameMap>,
     things: Query<(Entity, &Position)>,
     blockers: Query<&BlocksMovement>,
@@ -166,7 +199,9 @@ pub fn index_map(
             .expect("Entity {e:?} has a position outside the map: {pos:?}");
 
         if blockers.get(e).is_ok() {
+            // NB: This assumes there can only be a single blocking entity per tile which should be true by construction
             map.blocked[idx] = true;
+            map.blocked_by[idx] = Some(e);
         }
 
         map.tile_content[idx].push(e);

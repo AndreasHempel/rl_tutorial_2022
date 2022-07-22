@@ -22,6 +22,39 @@ impl Position {
     }
 }
 
+impl From<Position> for (u32, u32) {
+    fn from(pos: Position) -> Self {
+        (pos.x, pos.y)
+    }
+}
+
+impl From<&Position> for (u32, u32) {
+    fn from(pos: &Position) -> Self {
+        (pos.x, pos.y)
+    }
+}
+
+impl core::ops::Add<(i32, i32)> for Position {
+    type Output = Self;
+    fn add(self, rhs: (i32, i32)) -> Self::Output {
+        let x = {
+            if rhs.0.is_negative() {
+                self.x - rhs.0.unsigned_abs()
+            } else {
+                self.x + rhs.0 as u32
+            }
+        };
+        let y = {
+            if rhs.1.is_negative() {
+                self.y - rhs.1.unsigned_abs()
+            } else {
+                self.y + rhs.1 as u32
+            }
+        };
+        Position::new(x, y)
+    }
+}
+
 /// Signals an actor's intent to move
 #[derive(Debug, Component)]
 pub struct WantsToMove {
@@ -56,3 +89,7 @@ impl Viewshed {
 /// Marks entities that block tiles for movement
 #[derive(Debug, Component)]
 pub struct BlocksMovement;
+
+/// Marks entities that can be moved out of the way
+#[derive(Debug, Component)]
+pub struct Pushable;

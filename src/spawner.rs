@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::{Actor, BlocksMovement, Monster, Player, Position, Viewshed},
+    components::{Actor, BlocksMovement, Monster, Player, Position, Pushable, Viewshed},
     map::{GameMap, TileType},
     map_builder::{spawner::Spawnables, MapMetadata},
     render::{TILE_SIZE, ZBUF_CREATURES, ZBUF_ITEMS, ZBUF_PLAYER, ZBUF_TILES},
@@ -48,10 +48,11 @@ fn setup_player(
         .insert(Position::new(start.0, start.1))
         .insert(Viewshed::new(7))
         .insert(Actor::default())
-        .insert(BlocksMovement);
+        .insert(BlocksMovement)
+        .insert(Pushable);
 }
 
-/// Spawns everything from the generated [`SpawnList`]
+/// Spawns everything from the generated [`SpawnList`](crate::map_builder::SpawnList)
 fn spawn_things(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -123,7 +124,8 @@ fn turtle(
         .insert(pos)
         .insert(Viewshed::new(7))
         .insert(Actor::default())
-        .insert(BlocksMovement);
+        .insert(BlocksMovement)
+        .insert(Pushable);
 }
 
 /// Load the specified spritesheet at return a handle to the resulting [`TextureAtlas`]

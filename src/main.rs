@@ -81,6 +81,7 @@ mod input_handler;
 mod map;
 mod map_builder;
 mod monster_ai;
+mod motion_resolver;
 mod render;
 mod spawner;
 mod visibility;
