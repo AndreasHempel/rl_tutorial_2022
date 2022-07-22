@@ -98,6 +98,7 @@ impl Plugin for MapPlugin {
         use map_builder::{
             arbitrary_starting_point::ArbitraryStartingPoint,
             cellular_builder::CellularAutomataBuilder,
+            cull_unreachable::CullUnreachable,
             general_objective_spawner::GeneralObjectiveSpawner,
             room_based_builders::{
                 PositionSelectionMode, RoomBasedObjectiveSpawner, RoomBasedSpawner,
@@ -132,6 +133,7 @@ impl Plugin for MapPlugin {
                         vec![0, 5, 6, 7, 8],
                     ));
                     builder.with(ArbitraryStartingPoint::new());
+                    builder.with(CullUnreachable::new());
                     builder.with(GeneralObjectiveSpawner::new(Spawnables::TreasureChest));
                     builder
                 }

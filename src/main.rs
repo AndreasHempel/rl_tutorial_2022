@@ -48,18 +48,25 @@ fn main() {
     let args = CLIArgs::parse();
 
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins)
-        .add_state(GameState::Ticking)
-        .add_plugin(map::MapPlugin {
-            builder: args.map_builder,
-            seed: args.rng_seed,
-        })
-        .add_plugin(render::RenderPlugin)
-        .add_plugin(spawner::SpawningPlugin)
-        .add_plugin(actions::ActionPlugin)
-        .add_plugin(monster_ai::AIPlugin)
-        .add_plugin(input_handler::KeyboardInputPlugin)
-        .add_system(visibility::determine_visibility);
+    app.insert_resource(WindowDescriptor {
+        title: "Roguelike tutorial 2022 - Andreas Hempel".to_string(),
+        width: 1422.0,
+        height: 800.0,
+        // present_mode: PresentMode::AutoVsync,
+        ..default()
+    })
+    .add_plugins(DefaultPlugins)
+    .add_state(GameState::Ticking)
+    .add_plugin(map::MapPlugin {
+        builder: args.map_builder,
+        seed: args.rng_seed,
+    })
+    .add_plugin(render::RenderPlugin)
+    .add_plugin(spawner::SpawningPlugin)
+    .add_plugin(actions::ActionPlugin)
+    .add_plugin(monster_ai::AIPlugin)
+    .add_plugin(input_handler::KeyboardInputPlugin)
+    .add_system(visibility::determine_visibility);
 
     #[cfg(debug_assertions)]
     app.add_plugin(DebugPlugin)
