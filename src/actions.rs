@@ -29,7 +29,7 @@ fn move_actors(
     for (e, mov, mut p) in chars.iter_mut() {
         let next = Position {
             x: {
-                if mov.dx >= 0 {
+                if mov.dx.is_positive() {
                     p.x + mov.dx as u32
                 } else {
                     p.x - mov.dx.unsigned_abs()
