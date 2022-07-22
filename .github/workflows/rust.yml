@@ -27,21 +27,23 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libasound2-dev libudev-dev
-    - name: Install cargo-deny
-      if: ${{ matrix.build-type == 'debug' }}
-      run: cargo install --locked cargo-deny
     - name: Checkout repository
       uses: actions/checkout@v3
     - name: Cache build artifacts
       uses: actions/cache@v3
       with:
         path: |
+          ~/.cargo/.crates2.json
+          ~/.cargo/.crates.toml
           ~/.cargo/bin/
           ~/.cargo/registry/index/
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           **/target
         key: cargo-${{ runner.os }}-${{ matrix.build-type }}-${{ hashFiles('**/Cargo.lock') }}
+    - name: Install cargo-deny
+      if: ${{ matrix.build-type == 'debug' }}
+      run: cargo install --locked cargo-deny
     - name: Build
       run: cargo build --verbose ${{ matrix.build-flag }}
     - name: Run tests
