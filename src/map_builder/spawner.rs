@@ -29,8 +29,11 @@ pub fn fill_room(rng: &mut MapRng, room: &Rect, max_spawns: u32) -> SpawnList {
 
 /// Randomly selects spawn points from a given list of valid spawn positions (`region`)
 pub fn fill_region(rng: &mut MapRng, region: &[(u32, u32)], max_spawns: u32) -> SpawnList {
-    let spawn_table = spawn_table();
     let mut spawn_points = SpawnList::new();
+    if region.is_empty() {
+        return spawn_points;
+    }
+    let spawn_table = spawn_table();
 
     {
         let num_spawns = rng.gen_range(0..=max_spawns);

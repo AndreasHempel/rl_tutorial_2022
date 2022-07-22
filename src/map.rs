@@ -1,9 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{
-    components::{BlocksMovement, Position},
-    map_builder,
-};
+use crate::components::{BlocksMovement, Position};
 
 /// Available tile types
 #[derive(Debug, Clone, Copy, PartialEq, Component)]
@@ -95,11 +92,12 @@ pub enum MapBuilder {
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        use map_builder::{
+        use crate::map_builder::{
             arbitrary_starting_point::ArbitraryStartingPoint,
             cellular_builder::CellularAutomataBuilder,
             cull_unreachable::CullUnreachable,
             general_objective_spawner::GeneralObjectiveSpawner,
+            region_based_builders::{DistanceFunction, RegionBasedSpawner, VoronoiRegion},
             room_based_builders::{
                 PositionSelectionMode, RoomBasedObjectiveSpawner, RoomBasedSpawner,
                 RoomBasedStartingPosition, RoomSelectionMode,
@@ -132,9 +130,16 @@ impl Plugin for MapPlugin {
                         0.4,
                         vec![0, 5, 6, 7, 8],
                     ));
+                    // First add a starting point
                     builder.with(ArbitraryStartingPoint::new());
+                    // Then remove unreachable squares
                     builder.with(CullUnreachable::new());
+                    // Make sure that a treasure chest is spawned
                     builder.with(GeneralObjectiveSpawner::new(Spawnables::TreasureChest));
+                    // Split the tiles into regions
+                    builder.with(VoronoiRegion::new(10, DistanceFunction::Manhattan));
+                    // Spawn monsters into the regions
+                    builder.with(RegionBasedSpawner::new(3));
                     builder
                 }
             }

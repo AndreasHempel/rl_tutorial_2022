@@ -44,6 +44,9 @@ fn move_actors(
             },
         };
         if let Ok(idx) = map.xy_to_idx(next.x, next.y) {
+            // FIXME: This check is based on last turn's state of the map, meaning multiple characters
+            // may move successfully onto the same tile. Possible solution: double buffering the state
+            // of the world (see http://gameprogrammingpatterns.com/double-buffer.html#not-just-for-graphics)
             if !map.blocked[idx] {
                 *p = next;
             } else {
