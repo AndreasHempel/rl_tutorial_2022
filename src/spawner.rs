@@ -48,8 +48,7 @@ fn setup_player(
         .insert(Position::new(start.0, start.1))
         .insert(Viewshed::new(7))
         .insert(Actor::default())
-        .insert(BlocksMovement)
-        .insert(Pushable);
+        .insert(BlocksMovement);
 }
 
 /// Spawns everything from the generated [`SpawnList`](crate::map_builder::SpawnList)

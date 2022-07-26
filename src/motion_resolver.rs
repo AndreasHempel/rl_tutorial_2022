@@ -16,10 +16,11 @@ impl MotionResolver {
     /// Evaluates whether a given [`MoveAttempt`] is possible, recursively pushing other
     /// creatures out of the way if necessary (and possible). Updates the map appropriately
     /// if a [`MoveAttempt`] is deemed legal and leaves it unchanged if the motion is illegal
-    pub fn resolve(
+    pub fn resolve<F: Fn(Entity) -> bool>(
         mut self,
         mov: MoveAttempt,
         map: &mut GameMap,
+        is_pushable: F,
     ) -> Result<HashMap<Entity, Position>, ()> {
         // Guard against 'fake' moves with zero displacement
         if mov.dx == 0 && mov.dy == 0 {
@@ -28,24 +29,25 @@ impl MotionResolver {
             return Ok(res);
         }
         match mov.is_legal(map) {
-            MoveStatus::Illegal => {
-                warn!("Motion {mov:?} is illegal!");
-                Err(())
-            }
+            MoveStatus::Illegal => Err(()),
             MoveStatus::Legal => {
                 self.moves.push(mov);
                 Ok(self.commit(map))
             }
             MoveStatus::RequiresPush(e) => {
                 // Check if the blocking entity can be pushed in the same direction as the attempted motion
-                let next = MoveAttempt {
-                    entity: e,
-                    from: mov.from + (mov.dx, mov.dy),
-                    dx: mov.dx,
-                    dy: mov.dy,
-                };
-                self.moves.push(mov);
-                self.resolve(next, map)
+                if is_pushable(e) {
+                    let next = MoveAttempt {
+                        entity: e,
+                        from: mov.from + (mov.dx, mov.dy),
+                        dx: mov.dx,
+                        dy: mov.dy,
+                    };
+                    self.moves.push(mov);
+                    self.resolve(next, map, is_pushable)
+                } else {
+                    Err(())
+                }
             }
         }
     }
