@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::GameState;
 
+use crate::components::Pushable;
 use crate::motion_resolver::{MotionResolver, MoveAttempt};
 use crate::{
     components::{Actor, Player, Position, TakingTurn, WantsToMove},
@@ -24,6 +25,7 @@ impl Plugin for ActionPlugin {
 fn move_actors(
     movers: Query<(Entity, &WantsToMove), With<TakingTurn>>,
     mut chars: Query<&mut Position>,
+    pushables: Query<Entity, With<Pushable>>,
     mut map: ResMut<GameMap>,
     mut commands: Commands,
 ) {
@@ -40,6 +42,7 @@ fn move_actors(
                 dy: mov.dy,
             },
             map.as_mut(),
+            |e| pushables.contains(e),
         ) {
             for (e, next) in next_pos {
                 if let Ok(mut p) = chars.get_mut(e) {
