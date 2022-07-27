@@ -3,10 +3,8 @@
 //! Main entrypoint for this roguelike project
 
 use bevy::prelude::*;
-use clap::Parser;
-
-#[cfg(debug_assertions)]
 use bevy_inspector_egui::{RegisterInspectable, WorldInspectorPlugin};
+use clap::Parser;
 
 /// Describes the parameters that may be passed from the CLI
 #[derive(Parser, Debug)]
@@ -19,6 +17,10 @@ struct CLIArgs {
     /// Seed for map building RNG
     #[clap(short = 's', long = "seed", default_value = "42")]
     rng_seed: u64,
+
+    /// Flag to enable WorldInspector
+    #[clap(short = 'i', long = "inspector", action, default_value = "false")]
+    inspector: bool,
 }
 
 /// All possible game states
@@ -37,10 +39,18 @@ struct DebugPlugin;
 #[cfg(debug_assertions)]
 impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(WorldInspectorPlugin::new())
-            .register_inspectable::<components::Position>()
-            .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+        app.add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
             .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default());
+    }
+}
+
+/// Enables world inspector and related settings
+struct InspectorPlugin;
+
+impl Plugin for InspectorPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugin(WorldInspectorPlugin::new())
+            .register_inspectable::<components::Position>();
     }
 }
 
@@ -71,6 +81,10 @@ fn main() {
     #[cfg(debug_assertions)]
     app.add_plugin(DebugPlugin)
         .add_system(bevy::input::system::exit_on_esc_system);
+
+    if args.inspector {
+        app.add_plugin(InspectorPlugin);
+    }
 
     app.run();
 }

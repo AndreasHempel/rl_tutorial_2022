@@ -11,7 +11,8 @@ pub struct RenderPlugin;
 
 impl Plugin for RenderPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup_camera)
+        app.add_startup_system(setup_cameras)
+            .add_startup_system(setup_ui)
             .add_system(place_characters)
             .add_system(player_follow_camera)
             .add_system(render_map)
@@ -34,9 +35,10 @@ pub const ZBUF_ITEMS: f32 = 1.0;
 /// Z-buffer plane for map tiles
 pub const ZBUF_TILES: f32 = 0.0;
 
-/// Spawn a camera for rendering
-fn setup_camera(mut commands: Commands) {
+/// Spawn a camera for rendering and one for the UI
+fn setup_cameras(mut commands: Commands) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(UiCameraBundle::default());
 }
 
 /// Updates the screen coordinates ([`Transform`]) based on an entity's [`Position`]
@@ -95,4 +97,63 @@ pub fn render_creatures(
             }
         }
     }
+}
+
+fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // root node
+    commands
+        .spawn_bundle(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                justify_content: JustifyContent::SpaceBetween,
+                ..default()
+            },
+            color: Color::NONE.into(),
+            ..default()
+        })
+        .with_children(|parent| {
+            // left vertical fill (border)
+            parent
+                .spawn_bundle(NodeBundle {
+                    style: Style {
+                        size: Size::new(Val::Px(200.0), Val::Percent(100.0)),
+                        border: Rect::all(Val::Px(2.0)),
+                        ..default()
+                    },
+                    color: Color::rgb(0.65, 0.65, 0.65).into(),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    // left vertical fill (content)
+                    parent
+                        .spawn_bundle(NodeBundle {
+                            style: Style {
+                                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                                align_items: AlignItems::FlexEnd,
+                                ..default()
+                            },
+                            color: Color::rgb(0.15, 0.15, 0.15).into(),
+                            ..default()
+                        })
+                        .with_children(|parent| {
+                            // text
+                            parent.spawn_bundle(TextBundle {
+                                style: Style {
+                                    margin: Rect::all(Val::Px(5.0)),
+                                    ..default()
+                                },
+                                text: Text::with_section(
+                                    "Text Example",
+                                    TextStyle {
+                                        font: asset_server.load("Dawnlike/GUI/SDS_8x8.ttf"),
+                                        font_size: 20.0,
+                                        color: Color::WHITE,
+                                    },
+                                    Default::default(),
+                                ),
+                                ..default()
+                            });
+                        });
+                });
+        });
 }
