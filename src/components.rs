@@ -93,3 +93,7 @@ pub struct BlocksMovement;
 /// Marks entities that can be moved out of the way
 #[derive(Debug, Component)]
 pub struct Pushable;
+
+/// Marks tiles that are goals to proceed to the next level
+#[derive(Debug, Component)]
+pub struct LevelGoal;

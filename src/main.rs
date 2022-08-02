@@ -12,7 +12,7 @@ use clap::Parser;
 struct CLIArgs {
     /// What map builder to use
     #[clap(short = 'm', long = "map", value_enum, default_value = "rooms")]
-    map_builder: map::MapBuilder,
+    map_builder: level::MapBuilder,
 
     /// Seed for map building RNG
     #[clap(short = 's', long = "seed", default_value = "42")]
@@ -30,6 +30,10 @@ pub enum GameState {
     WaitingForPlayer,
     /// Iterating through all active actors to resolve their actions
     Ticking,
+    /// Entering a new level (or starting the game)
+    EnterNewLevel,
+    /// The player ran out of time
+    GameOver,
 }
 
 #[cfg(debug_assertions)]
@@ -58,25 +62,28 @@ fn main() {
     let args = CLIArgs::parse();
 
     let mut app = App::new();
-    app.insert_resource(WindowDescriptor {
-        title: "Roguelike tutorial 2022 - Andreas Hempel".to_string(),
-        width: 1422.0,
-        height: 800.0,
-        // present_mode: PresentMode::AutoVsync,
-        ..default()
-    })
-    .add_plugins(DefaultPlugins)
-    .add_state(GameState::Ticking)
-    .add_plugin(map::MapPlugin {
-        builder: args.map_builder,
-        seed: args.rng_seed,
-    })
-    .add_plugin(render::RenderPlugin)
-    .add_plugin(spawner::SpawningPlugin)
-    .add_plugin(actions::ActionPlugin)
-    .add_plugin(monster_ai::AIPlugin)
-    .add_plugin(input_handler::KeyboardInputPlugin)
-    .add_system(visibility::determine_visibility);
+    app.add_plugins(DefaultPlugins)
+        .add_plugin(bevy_egui::EguiPlugin)
+        .insert_resource(WindowDescriptor {
+            title: "Roguelike tutorial 2022 - Andreas Hempel".to_string(),
+            width: 1422.0,
+            height: 800.0,
+            // present_mode: PresentMode::AutoVsync,
+            ..default()
+        })
+        .add_state(GameState::EnterNewLevel)
+        .add_plugin(map::MapPlugin)
+        .add_plugin(level::LevelPlugin {
+            builder: args.map_builder,
+            seed: args.rng_seed,
+        })
+        .add_plugin(render::RenderPlugin)
+        .add_plugin(ui::UIPlugin)
+        .add_plugin(spawner::SpawningPlugin)
+        .add_plugin(actions::ActionPlugin)
+        .add_plugin(monster_ai::AIPlugin)
+        .add_plugin(input_handler::KeyboardInputPlugin)
+        .add_system(visibility::determine_visibility);
 
     #[cfg(debug_assertions)]
     app.add_plugin(DebugPlugin)
@@ -92,10 +99,12 @@ fn main() {
 mod actions;
 mod components;
 mod input_handler;
+mod level;
 mod map;
 mod map_builder;
 mod monster_ai;
 mod motion_resolver;
 mod render;
 mod spawner;
+mod ui;
 mod visibility;

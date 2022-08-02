@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::{Actor, BlocksMovement, Monster, Player, Position, Pushable, Viewshed},
+    components::{Actor, BlocksMovement, LevelGoal, Monster, Player, Position, Pushable, Viewshed},
     map::{GameMap, TileType},
     map_builder::{spawner::Spawnables, MapMetadata},
     render::{TILE_SIZE, ZBUF_CREATURES, ZBUF_ITEMS, ZBUF_PLAYER, ZBUF_TILES},
+    GameState,
 };
 
 /// Bundles spawning functions into a single plugin
@@ -14,8 +15,8 @@ pub struct SpawningPlugin;
 impl Plugin for SpawningPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_player)
-            .add_startup_system(spawn_tiles)
-            .add_startup_system(spawn_things);
+            .add_system_set(SystemSet::on_exit(GameState::EnterNewLevel).with_system(spawn_tiles))
+            .add_system_set(SystemSet::on_exit(GameState::EnterNewLevel).with_system(spawn_things));
     }
 }
 
@@ -27,7 +28,6 @@ fn setup_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-    map_metadata: Res<MapMetadata>,
 ) {
     let texture_handle = asset_server.load("Dawnlike/Characters/Pest0.png");
     let texture_atlas =
@@ -36,7 +36,6 @@ fn setup_player(
     let mut sprite = TextureAtlasSprite::new(59);
     sprite.custom_size = Some(Vec2::new(TILE_SIZE, TILE_SIZE));
 
-    let start = map_metadata.starting_position.unwrap();
     commands
         .spawn_bundle(SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
@@ -45,7 +44,7 @@ fn setup_player(
             ..default()
         })
         .insert(Player)
-        .insert(Position::new(start.0, start.1))
+        // The player position will be set upon map generation based on the starting position
         .insert(Viewshed::new(7))
         .insert(Actor::default())
         .insert(BlocksMovement);
@@ -57,6 +56,7 @@ fn spawn_things(
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     map_metadata: Res<MapMetadata>,
+    player: Query<Entity, With<Player>>,
 ) {
     for ((x, y), s) in map_metadata.spawn_list.iter() {
         use Spawnables::*;
@@ -74,6 +74,14 @@ fn spawn_things(
                 texture_atlases.as_mut(),
             ),
         }
+    }
+
+    // Set the player position to match the generated starting position
+    if let Some(start) = map_metadata.starting_position {
+        let e = player.single();
+        commands.entity(e).insert(Position::new(start.0, start.1));
+    } else {
+        warn!("No starting position for the player available!");
     }
 }
 
@@ -96,7 +104,8 @@ fn treasure(
             sprite: get_sprite(1),
             ..default()
         })
-        .insert(pos);
+        .insert(pos)
+        .insert(LevelGoal);
 }
 
 fn turtle(
