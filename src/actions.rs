@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::GameState;
 
-use crate::components::Pushable;
+use crate::components::{LevelGoal, Pushable};
 use crate::motion_resolver::{MotionResolver, MoveAttempt};
 use crate::{
     components::{Actor, Player, Position, TakingTurn, WantsToMove},
@@ -13,11 +13,79 @@ use crate::{
 #[derive(Debug)]
 pub struct ActionPlugin;
 
+/// Keeps track of the number of elapsed turns, how many turns the player has left etc.
+#[derive(Debug)]
+pub struct PlayerTurns {
+    remaining: u32,
+    completed: u32,
+}
+
+impl Default for PlayerTurns {
+    fn default() -> Self {
+        Self {
+            remaining: 200,
+            completed: 0,
+        }
+    }
+}
+
+/// Signals possible issues upon ticking the game turn
+enum TurnCounterError {
+    /// The player ran out of turns
+    NoTimeLeft,
+}
+
+impl PlayerTurns {
+    /// End the game turn
+    fn tick(&mut self) -> Result<(), TurnCounterError> {
+        self.completed += 1;
+        self.remaining -= 1;
+        if self.remaining == 0 {
+            return Err(TurnCounterError::NoTimeLeft);
+        }
+        Ok(())
+    }
+
+    /// Get the finished number of turns
+    pub fn get_completed(&self) -> u32 {
+        self.completed
+    }
+
+    /// Get the remaining number of turns
+    pub fn get_remaining(&self) -> u32 {
+        self.remaining
+    }
+}
+
+/// System labels used for system ordering
+#[derive(Debug, PartialEq, Eq, Hash, Clone, SystemLabel)]
+enum SystemLabels {
+    MoveActors,
+    CheckLevelGoals,
+    WaitForPlayer,
+}
+
 impl Plugin for ActionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_update(GameState::Ticking).with_system(move_actors))
+        app.insert_resource(PlayerTurns::default())
             .add_system_set(SystemSet::on_enter(GameState::Ticking).with_system(enqueue_actors))
-            .add_system_set(SystemSet::on_update(GameState::Ticking).with_system(wait_for_player));
+            .add_system_set(
+                SystemSet::on_update(GameState::Ticking)
+                    .with_system(move_actors)
+                    .label(SystemLabels::MoveActors),
+            )
+            .add_system_set(
+                SystemSet::on_update(GameState::Ticking)
+                    .with_system(check_level_goals)
+                    .label(SystemLabels::CheckLevelGoals)
+                    .after(SystemLabels::MoveActors),
+            )
+            .add_system_set(
+                SystemSet::on_update(GameState::Ticking)
+                    .with_system(wait_for_player)
+                    .label(SystemLabels::WaitForPlayer)
+                    .after(SystemLabels::MoveActors),
+            );
     }
 }
 
@@ -68,14 +136,39 @@ fn enqueue_actors(actors: Query<Entity, (With<Actor>, Without<Player>)>, mut com
     }
 }
 
-/// Waits for all actors to have taken their turn and returns control to the player
+/// Waits for all actors to have taken their turn, ticks one game turn forward,
+/// and returns control to the player or signals GameOver
 fn wait_for_player(
     actors: Query<&Actor, With<TakingTurn>>,
     mut game_state: ResMut<State<GameState>>,
+    mut turns: ResMut<PlayerTurns>,
 ) {
     if actors.is_empty() {
-        game_state
-            .set(GameState::WaitingForPlayer)
-            .expect("Failed to wait for player input!");
+        if let Err(TurnCounterError::NoTimeLeft) = turns.tick() {
+            game_state
+                .set(GameState::GameOver)
+                .expect("Failed to signal game over!");
+        } else {
+            game_state
+                .set(GameState::WaitingForPlayer)
+                .expect("Failed to wait for player input!");
+        }
+    }
+}
+
+/// Checks if the player has reached the level goal
+fn check_level_goals(
+    player: Query<&Position, With<Player>>,
+    goals: Query<&Position, With<LevelGoal>>,
+    mut state: ResMut<State<GameState>>,
+) {
+    if let Ok(pos) = player.get_single() {
+        for goal in goals.iter() {
+            if pos == goal {
+                state
+                    .set(GameState::EnterNewLevel)
+                    .expect("Failed to enter level generation after finding the level goal!");
+            }
+        }
     }
 }

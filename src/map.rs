@@ -111,78 +111,11 @@ impl GameMap {
     }
 }
 
-pub struct MapPlugin {
-    pub builder: MapBuilder,
-    pub seed: u64,
-}
-
-/// Available builder configs to choose from the command line
-#[derive(Debug, clap::ValueEnum, Clone)]
-pub enum MapBuilder {
-    Rooms,
-    Cellular,
-}
+pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        use crate::map_builder::{
-            arbitrary_starting_point::ArbitraryStartingPoint,
-            cellular_builder::CellularAutomataBuilder,
-            cull_unreachable::CullUnreachable,
-            general_objective_spawner::GeneralObjectiveSpawner,
-            region_based_builders::{DistanceFunction, RegionBasedSpawner, VoronoiRegion},
-            room_based_builders::{
-                PositionSelectionMode, RoomBasedObjectiveSpawner, RoomBasedSpawner,
-                RoomBasedStartingPosition, RoomSelectionMode,
-            },
-            simple_map_builder::SimpleMapBuilder,
-            spawner::Spawnables,
-            BuilderChain,
-        };
-
-        let builder = BuilderChain::new();
-        let builder = {
-            match self.builder {
-                MapBuilder::Rooms => {
-                    let mut builder = builder.start_with(SimpleMapBuilder::new(10, 4, 12));
-                    builder.with(RoomBasedStartingPosition::new(
-                        RoomSelectionMode::First,
-                        PositionSelectionMode::Center,
-                    ));
-                    builder.with(RoomBasedSpawner::new(1));
-                    builder.with(RoomBasedObjectiveSpawner::new(
-                        RoomSelectionMode::Last,
-                        PositionSelectionMode::Random,
-                        Spawnables::TreasureChest,
-                    ));
-                    builder
-                }
-                MapBuilder::Cellular => {
-                    let mut builder = builder.start_with(CellularAutomataBuilder::new(
-                        10,
-                        0.4,
-                        vec![0, 5, 6, 7, 8],
-                    ));
-                    // First add a starting point
-                    builder.with(ArbitraryStartingPoint::new());
-                    // Then remove unreachable squares
-                    builder.with(CullUnreachable::new());
-                    // Make sure that a treasure chest is spawned
-                    builder.with(GeneralObjectiveSpawner::new(Spawnables::TreasureChest));
-                    // Split the tiles into regions
-                    builder.with(VoronoiRegion::new(10, DistanceFunction::Manhattan));
-                    // Spawn monsters into the regions
-                    builder.with(RegionBasedSpawner::new(3));
-                    builder
-                }
-            }
-        };
-        let mut rng = rand::SeedableRng::seed_from_u64(self.seed);
-        let (map, map_metadata) = builder.build_map(&mut rng);
-
-        app.insert_resource(map)
-            .insert_resource(map_metadata)
-            .add_system(index_map);
+        app.add_system(index_map);
     }
 }
 
@@ -194,17 +127,15 @@ fn index_map(
     map.determine_blocked();
     map.clear_content_index();
     for (e, pos) in things.iter() {
-        let idx = map
-            .xy_to_idx(pos.x, pos.y)
-            .expect("Entity {e:?} has a position outside the map: {pos:?}");
+        if let Ok(idx) = map.xy_to_idx(pos.x, pos.y) {
+            if blockers.get(e).is_ok() {
+                // NB: This assumes there can only be a single blocking entity per tile which should be true by construction
+                map.blocked[idx] = true;
+                map.blocked_by[idx] = Some(e);
+            }
 
-        if blockers.get(e).is_ok() {
-            // NB: This assumes there can only be a single blocking entity per tile which should be true by construction
-            map.blocked[idx] = true;
-            map.blocked_by[idx] = Some(e);
+            map.tile_content[idx].push(e);
         }
-
-        map.tile_content[idx].push(e);
     }
 }
 
