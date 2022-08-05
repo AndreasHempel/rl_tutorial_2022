@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::GameState;
 
 use crate::components::{LevelGoal, Pushable};
+use crate::level::{LevelSettings, MapRNG};
 use crate::motion_resolver::{MotionResolver, MoveAttempt};
 use crate::{
     components::{Actor, Player, Position, TakingTurn, WantsToMove},
@@ -18,15 +19,6 @@ pub struct ActionPlugin;
 pub struct PlayerTurns {
     remaining: u32,
     completed: u32,
-}
-
-impl Default for PlayerTurns {
-    fn default() -> Self {
-        Self {
-            remaining: 200,
-            completed: 0,
-        }
-    }
 }
 
 /// Signals possible issues upon ticking the game turn
@@ -67,7 +59,7 @@ enum SystemLabels {
 
 impl Plugin for ActionPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(PlayerTurns::default())
+        app.add_system_set(SystemSet::on_enter(GameState::StartGame).with_system(setup_game))
             .add_system_set(SystemSet::on_enter(GameState::Ticking).with_system(enqueue_actors))
             .add_system_set(
                 SystemSet::on_update(GameState::Ticking)
@@ -87,6 +79,26 @@ impl Plugin for ActionPlugin {
                     .after(SystemLabels::MoveActors),
             );
     }
+}
+
+/// Initializes resources etc. to their state at the start of a game
+fn setup_game(
+    mut commands: Commands,
+    mut state: ResMut<State<GameState>>,
+    level_settings: Res<LevelSettings>,
+) {
+    commands.insert_resource(PlayerTurns {
+        remaining: 100,
+        completed: 0,
+    });
+
+    // Reset map generation RNG to the same seed upon restarting the game
+    let rng = rand::SeedableRng::seed_from_u64(level_settings.original_seed);
+    commands.insert_resource(MapRNG(rng));
+
+    state
+        .set(GameState::EnterNewLevel)
+        .expect("Could not generate a new level after setting up the game!");
 }
 
 /// Updates the [Position] component of all moving actors
@@ -161,10 +173,12 @@ fn check_level_goals(
     player: Query<&Position, With<Player>>,
     goals: Query<&Position, With<LevelGoal>>,
     mut state: ResMut<State<GameState>>,
+    mut turns: ResMut<PlayerTurns>,
 ) {
     if let Ok(pos) = player.get_single() {
         for goal in goals.iter() {
             if pos == goal {
+                turns.remaining += 40;
                 state
                     .set(GameState::EnterNewLevel)
                     .expect("Failed to enter level generation after finding the level goal!");
