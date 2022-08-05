@@ -16,7 +16,10 @@ pub struct LevelPlugin {
 
 /// Settings used for level generation
 pub struct LevelSettings {
+    /// [`MapBuilder`] to use for level generation (identical for all levels)
     pub builder: MapBuilder,
+    /// Seed to use when restarting game (to allow a second try upon failing)
+    pub original_seed: u64,
 }
 
 /// Available builder configs to choose from the command line
@@ -33,15 +36,14 @@ enum SystemLabels {
 }
 
 /// Newtype wrapping the RNG used for level generation
-struct MapRNG(StdRng);
+pub struct MapRNG(pub StdRng);
 
 impl Plugin for LevelPlugin {
     fn build(&self, app: &mut App) {
-        let rng = rand::SeedableRng::seed_from_u64(self.seed);
         app.insert_resource(LevelSettings {
             builder: self.builder,
+            original_seed: self.seed,
         })
-        .insert_resource(MapRNG(rng))
         // Insert dummy map data to make sure the resource exists
         .insert_resource(GameMap::new(1, 1))
         .insert_resource(MapMetadata::default())

@@ -34,6 +34,8 @@ pub enum GameState {
     EnterNewLevel,
     /// The player ran out of time
     GameOver,
+    /// Starting a new game, e.g. upon launch or after a [`GameOver`](GameState::GameOver)
+    StartGame,
 }
 
 #[cfg(debug_assertions)]
@@ -71,7 +73,7 @@ fn main() {
             // present_mode: PresentMode::AutoVsync,
             ..default()
         })
-        .add_state(GameState::EnterNewLevel)
+        .add_state(GameState::StartGame)
         .add_plugin(map::MapPlugin)
         .add_plugin(level::LevelPlugin {
             builder: args.map_builder,
