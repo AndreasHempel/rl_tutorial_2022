@@ -133,9 +133,16 @@ fn generate_level(
 /// Remove all entities on the current map
 fn despawn_map_entities(
     things: Query<Entity, (With<Position>, Without<Player>)>,
+    player: Query<Entity, With<Player>>,
     mut commands: Commands,
 ) {
     for e in things.iter() {
         commands.entity(e).despawn();
+    }
+
+    // Need to remove the player's position to avoid tiles on the new map be revealed during
+    // map indexing before the new starting position takes effect
+    for e in player.iter() {
+        commands.entity(e).remove::<Position>();
     }
 }
