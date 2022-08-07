@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext};
+use iyes_loopless::{prelude::IntoConditionalSystem, state::NextState};
 
-use crate::{actions::PlayerTurns, GameState};
+use crate::{game_state::PlayerTurns, GameState};
 
 /// Bundles systems responsible for rendering
 #[derive(Debug)]
@@ -11,7 +12,7 @@ impl Plugin for UIPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_ui_elements)
             .add_system(render_ui)
-            .add_system_set(SystemSet::on_update(GameState::GameOver).with_system(gameover_menu));
+            .add_system(gameover_menu.run_in_state(GameState::GameOver));
     }
 }
 
@@ -48,11 +49,7 @@ fn render_ui(mut ctx: ResMut<EguiContext>, turns: Option<Res<PlayerTurns>>) {
     });
 }
 
-fn gameover_menu(
-    mut ctx: ResMut<EguiContext>,
-    mut state: ResMut<State<GameState>>,
-    turns: Res<PlayerTurns>,
-) {
+fn gameover_menu(mut ctx: ResMut<EguiContext>, mut commands: Commands, turns: Res<PlayerTurns>) {
     egui::Area::new("Game over!")
         .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
         .order(egui::Order::Foreground)
@@ -69,9 +66,7 @@ fn gameover_menu(
                         );
                         ui.label(msg);
                         if ui.button("Try again!").clicked() {
-                            state
-                                .set(GameState::StartGame)
-                                .expect("Could not start a new game after a game over!");
+                            commands.insert_resource(NextState(GameState::StartGame));
                         }
                     });
                 });
