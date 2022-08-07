@@ -109,6 +109,21 @@ impl GameMap {
             self.blocked_by[to_idx] = Some(e);
         }
     }
+
+    pub fn get_free_neighbors(&self, pos: &Position) -> Vec<Position> {
+        let mut neighbors = Vec::new();
+        for i in -1..=1 {
+            for j in -1..=1 {
+                let n = pos + (i, j);
+                if let Ok(idx) = self.xy_to_idx(n.x, n.y) {
+                    if !self.blocked[idx] {
+                        neighbors.push(n);
+                    }
+                }
+            }
+        }
+        neighbors
+    }
 }
 
 pub struct MapPlugin;

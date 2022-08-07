@@ -39,7 +39,7 @@ impl MotionResolver {
                 if is_pushable(e) {
                     let next = MoveAttempt {
                         entity: e,
-                        from: mov.from + (mov.dx, mov.dy),
+                        from: &mov.from + (mov.dx, mov.dy),
                         dx: mov.dx,
                         dy: mov.dy,
                     };
@@ -62,7 +62,7 @@ impl MotionResolver {
             .rev()
             .map(|mov| {
                 let from = &mov.from;
-                let to = *from + (mov.dx, mov.dy);
+                let to = from + (mov.dx, mov.dy);
                 map.move_entity_unchecked((from.x, from.y), (to.x, to.y), mov.entity);
                 (mov.entity, to)
             })
@@ -94,7 +94,7 @@ impl MoveAttempt {
     /// Checks if this [`MoveAttempt`] is possible or not
     fn is_legal(&self, map: &GameMap) -> MoveStatus {
         let from = &self.from;
-        let to = *from + (self.dx, self.dy);
+        let to = from + (self.dx, self.dy);
         if let (Ok(from_idx), Ok(to_idx)) =
             (map.xy_to_idx(from.x, from.y), map.xy_to_idx(to.x, to.y))
         {
