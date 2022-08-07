@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use iyes_loopless::prelude::AppLooplessStateExt;
 
 use crate::{
     components::{Actor, BlocksMovement, LevelGoal, Monster, Player, Position, Pushable, Viewshed},
@@ -15,8 +16,8 @@ pub struct SpawningPlugin;
 impl Plugin for SpawningPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_player)
-            .add_system_set(SystemSet::on_exit(GameState::EnterNewLevel).with_system(spawn_tiles))
-            .add_system_set(SystemSet::on_exit(GameState::EnterNewLevel).with_system(spawn_things));
+            .add_exit_system(GameState::EnterNewLevel, spawn_tiles)
+            .add_exit_system(GameState::EnterNewLevel, spawn_things);
     }
 }
 

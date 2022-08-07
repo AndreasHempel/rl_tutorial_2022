@@ -78,6 +78,7 @@ pub struct Viewshed {
 }
 
 impl Viewshed {
+    /// Create a new [`Viewshed`] with the specified sight range
     pub fn new(range: u32) -> Self {
         Viewshed {
             visible_tiles: Vec::new(),

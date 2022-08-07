@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use iyes_loopless::prelude::AppLooplessStateExt;
 use rand::prelude::StdRng;
 
 use crate::{
@@ -47,17 +48,24 @@ impl Plugin for LevelPlugin {
         // Insert dummy map data to make sure the resource exists
         .insert_resource(GameMap::new(1, 1))
         .insert_resource(MapMetadata::default())
-        .add_system_set(
-            SystemSet::on_enter(GameState::EnterNewLevel)
-                .with_system(generate_level)
-                .label(SystemLabels::GenerateLevel),
+        .add_enter_system(GameState::StartGame, setup_game)
+        // TODO: Check if this could be an exit system to have a complete cleanup (commands applied) before generating a new map
+        .add_enter_system(
+            GameState::EnterNewLevel,
+            generate_level.label(SystemLabels::GenerateLevel),
         )
-        .add_system_set(
-            SystemSet::on_enter(GameState::EnterNewLevel)
-                .with_system(despawn_map_entities)
-                .before(SystemLabels::GenerateLevel),
+        .add_enter_system(
+            GameState::EnterNewLevel,
+            despawn_map_entities.before(SystemLabels::GenerateLevel),
         );
     }
+}
+
+/// Initializes resources required for level generation to their state at the start of a game
+fn setup_game(mut commands: Commands, level_settings: Res<LevelSettings>) {
+    // Reset map generation RNG to the same seed upon restarting the game
+    let rng = rand::SeedableRng::seed_from_u64(level_settings.original_seed);
+    commands.insert_resource(MapRNG(rng));
 }
 
 /// Generates a map and performs other setup steps necessary upon entering a level
@@ -66,7 +74,6 @@ fn generate_level(
     mut rng: ResMut<MapRNG>,
     mut res_map: ResMut<GameMap>,
     mut res_map_metadata: ResMut<MapMetadata>,
-    mut state: ResMut<State<GameState>>,
 ) {
     use crate::map_builder::{
         arbitrary_starting_point::ArbitraryStartingPoint,
@@ -121,10 +128,6 @@ fn generate_level(
 
     *res_map = map;
     *res_map_metadata = map_metadata;
-
-    state
-        .set(GameState::WaitingForPlayer)
-        .expect("Failed to wait for player after generating a new level!");
 }
 
 /// Remove all entities on the current map

@@ -73,7 +73,7 @@ fn main() {
             // present_mode: PresentMode::AutoVsync,
             ..default()
         })
-        .add_state(GameState::StartGame)
+        .add_plugin(game_state::GameStatePlugin)
         .add_plugin(map::MapPlugin)
         .add_plugin(level::LevelPlugin {
             builder: args.map_builder,
@@ -100,6 +100,7 @@ fn main() {
 
 mod actions;
 mod components;
+mod game_state;
 mod input_handler;
 mod level;
 mod map;

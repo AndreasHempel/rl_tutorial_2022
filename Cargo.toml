@@ -9,5 +9,6 @@ bevy = { version = "0.7", features = ["dynamic"] }
 bevy-inspector-egui = { version = "0.11" }
 bevy_egui = { version = "0.14.0", default-features = false }
 clap = { version = "3.2.12", features = ["derive"] }
+iyes_loopless = "0.6"
 pathfinding = "3.0.13"
 rand = { version = "0.8" }
