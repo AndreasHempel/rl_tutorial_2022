@@ -2,9 +2,10 @@ use bevy::prelude::*;
 use iyes_loopless::prelude::AppLooplessStateExt;
 
 use crate::{
-    components::{Actor, BlocksMovement, LevelGoal, Monster, Player, Position, Pushable, Viewshed},
+    components::{Actor, BlocksMovement, LevelGoal, Monster, Position, Pushable, Viewshed},
     map::{GameMap, TileType},
     map_builder::{spawner::Spawnables, MapMetadata},
+    player::Player,
     render::{TILE_SIZE, ZBUF_CREATURES, ZBUF_ITEMS, ZBUF_PLAYER, ZBUF_TILES},
     GameState,
 };
@@ -44,7 +45,7 @@ fn setup_player(
             sprite,
             ..default()
         })
-        .insert(Player)
+        .insert(Player::new(100))
         // The player position will be set upon map generation based on the starting position
         .insert(Viewshed::new(7))
         .insert(Actor::default())

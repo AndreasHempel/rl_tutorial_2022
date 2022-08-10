@@ -85,6 +85,7 @@ fn main() {
         .add_plugin(actions::ActionPlugin)
         .add_plugin(monster_ai::AIPlugin)
         .add_plugin(input_handler::KeyboardInputPlugin)
+        .add_plugin(player::PlayerPlugin)
         .add_system(visibility::determine_visibility);
 
     #[cfg(debug_assertions)]
@@ -107,6 +108,7 @@ mod map;
 mod map_builder;
 mod monster_ai;
 mod motion_resolver;
+mod player;
 mod render;
 mod spawner;
 mod ui;

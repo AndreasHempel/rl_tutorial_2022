@@ -1,10 +1,6 @@
 use bevy::prelude::*;
 use bevy_inspector_egui::Inspectable;
 
-/// Marks the (only) player entity
-#[derive(Component, Debug)]
-pub struct Player;
-
 /// Marks a monstrous being
 #[derive(Component, Debug)]
 pub struct Monster;

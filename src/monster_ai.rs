@@ -3,10 +3,9 @@ use pathfinding::directed::astar::astar;
 use rand::prelude::*;
 
 use crate::{
-    components::{
-        Actor, Monster, MonsterStrategy, Player, Position, TakingTurn, Viewshed, WantsToMove,
-    },
+    components::{Actor, Monster, MonsterStrategy, Position, TakingTurn, Viewshed, WantsToMove},
     map::GameMap,
+    player::Player,
 };
 
 /// Bundles AI-related systems
@@ -106,7 +105,9 @@ fn chasing_monsters(
                 commands.entity(e).remove::<TakingTurn>();
             }
         } else {
-            warn!("Could not find a path from monster {e:?} to player {player:?}!");
+            // Monster is blocked from reaching the player -> skip its turn
+            // FIXME: Improve this to have the monster still get closer to the player
+            commands.entity(e).remove::<TakingTurn>();
         }
     }
 }

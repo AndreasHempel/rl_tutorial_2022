@@ -3,10 +3,7 @@ use iyes_loopless::prelude::AppLooplessStateExt;
 use rand::prelude::StdRng;
 
 use crate::{
-    components::{Player, Position},
-    map::GameMap,
-    map_builder::MapMetadata,
-    GameState,
+    components::Position, map::GameMap, map_builder::MapMetadata, player::Player, GameState,
 };
 
 /// Plugin responsible for level generation and cleanup
