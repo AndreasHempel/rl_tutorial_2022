@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::{Player, Position, Viewshed},
+    components::{Position, Viewshed},
     map::{GameMap, TileType},
+    player::Player,
 };
 
 mod shadowcasting;

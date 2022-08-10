@@ -5,9 +5,10 @@ use iyes_loopless::prelude::AppLooplessStateExt;
 use crate::GameState;
 
 use crate::{
-    components::{Actor, Player, Position, Pushable, TakingTurn, WantsToMove},
+    components::{Actor, Position, Pushable, TakingTurn, WantsToMove},
     map::GameMap,
     motion_resolver::{MotionResolver, MoveAttempt},
+    player::Player,
 };
 
 /// Bundles all systems responsible for turn-based action management
@@ -20,9 +21,17 @@ enum SystemLabels {
     MoveActors,
 }
 
+/// Event messages signalling the cost of an action
+#[derive(Debug)]
+pub struct ActionCost {
+    pub actor: Entity,
+    pub cost: u32,
+}
+
 impl Plugin for ActionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_enter_system(GameState::Ticking, enqueue_actors)
+        app.add_event::<ActionCost>()
+            .add_enter_system(GameState::Ticking, enqueue_actors)
             .add_system(
                 move_actors
                     .run_in_state(GameState::Ticking)
@@ -31,13 +40,14 @@ impl Plugin for ActionPlugin {
     }
 }
 
-/// Updates the [Position] component of all moving actors
+/// Updates the [`Position`] component of all moving actors
 fn move_actors(
     movers: Query<(Entity, &WantsToMove), With<TakingTurn>>,
     mut chars: Query<&mut Position>,
     pushables: Query<Entity, With<Pushable>>,
     mut map: ResMut<GameMap>,
     mut commands: Commands,
+    mut costs: EventWriter<ActionCost>,
 ) {
     // Iterate over all actors that intend to move
     for (e, mov) in movers.iter() {
@@ -54,6 +64,7 @@ fn move_actors(
             map.as_mut(),
             |e| pushables.contains(e),
         ) {
+            let cost = next_pos.len() as u32;
             for (e, next) in next_pos {
                 if let Ok(mut p) = chars.get_mut(e) {
                     *p = next;
@@ -61,6 +72,7 @@ fn move_actors(
                     warn!("Cannot find position of {e:?} to move it to {next:?}!");
                 }
             }
+            costs.send(ActionCost { actor: e, cost });
         } else {
             warn!("Could not move {e:?} from {p:?} by ({mov:?})");
         }

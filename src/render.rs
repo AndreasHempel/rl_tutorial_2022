@@ -1,8 +1,9 @@
 use bevy::{prelude::*, render::camera::Camera2d};
 
 use crate::{
-    components::{Player, Position, Viewshed},
+    components::{Position, Viewshed},
     map::{GameMap, TileType},
+    player::Player,
 };
 
 /// Bundles systems responsible for rendering

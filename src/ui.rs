@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext};
 use iyes_loopless::{prelude::IntoConditionalSystem, state::NextState};
 
-use crate::{game_state::PlayerTurns, GameState};
+use crate::{player::Player, GameState};
 
 /// Bundles systems responsible for rendering
 #[derive(Debug)]
@@ -34,22 +34,22 @@ fn setup_ui_elements(mut ctx: ResMut<EguiContext>) {
     ctx.ctx_mut().set_fonts(fonts);
 }
 
-fn render_ui(mut ctx: ResMut<EguiContext>, turns: Option<Res<PlayerTurns>>) {
+fn render_ui(mut ctx: ResMut<EguiContext>, player: Query<&Player>) {
     egui::SidePanel::right("Right panel").show(ctx.ctx_mut(), |ui| {
-        if let Some(turns) = turns {
+        if let Ok(player) = player.get_single() {
             ui.horizontal(|ui| {
-                ui.label("Turns left: ");
-                ui.label(turns.get_remaining().to_string());
+                ui.label("Action points left: ");
+                ui.label(player.get_remaining_ap().to_string());
             });
             ui.horizontal(|ui| {
                 ui.label("Turns completed: ");
-                ui.label(turns.get_completed().to_string());
+                ui.label(player.get_completed_turns().to_string());
             });
         }
     });
 }
 
-fn gameover_menu(mut ctx: ResMut<EguiContext>, mut commands: Commands, turns: Res<PlayerTurns>) {
+fn gameover_menu(mut ctx: ResMut<EguiContext>, mut commands: Commands, player: Query<&Player>) {
     egui::Area::new("Game over!")
         .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
         .order(egui::Order::Foreground)
@@ -62,7 +62,7 @@ fn gameover_menu(mut ctx: ResMut<EguiContext>, mut commands: Commands, turns: Re
                     ui.vertical_centered(|ui| {
                         let msg = format!(
                             "You ran out of time after making {} moves...",
-                            turns.get_completed()
+                            player.single().get_completed_turns()
                         );
                         ui.label(msg);
                         if ui.button("Try again!").clicked() {

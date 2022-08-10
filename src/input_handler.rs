@@ -3,7 +3,10 @@ use iyes_loopless::state::{CurrentState, NextState};
 
 use super::GameState;
 
-use crate::components::{Player, TakingTurn, WantsToMove};
+use crate::{
+    components::{TakingTurn, WantsToMove},
+    player::Player,
+};
 
 /// Bundles systems handling keyboard inputs
 #[derive(Debug)]
