@@ -102,7 +102,7 @@ fn generate_level(
                     RoomSelectionMode::First,
                     PositionSelectionMode::Center,
                 ));
-                builder.with(RoomBasedSpawner::new(1));
+                builder.with(RoomBasedSpawner::new(5));
                 builder.with(RoomBasedObjectiveSpawner::new(
                     RoomSelectionMode::Last,
                     PositionSelectionMode::Random,
@@ -122,7 +122,7 @@ fn generate_level(
                 // Split the tiles into regions
                 builder.with(VoronoiRegion::new(10, DistanceFunction::Manhattan));
                 // Spawn monsters into the regions
-                builder.with(RegionBasedSpawner::new(3));
+                builder.with(RegionBasedSpawner::new(10));
                 builder
             }
         }

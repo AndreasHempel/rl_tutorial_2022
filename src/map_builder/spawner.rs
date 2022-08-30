@@ -6,14 +6,14 @@ use super::{random_table::RandomTable, rect::Rect, MapRng, SpawnList};
 /// All things that can be spawned onto a map
 #[derive(Clone, Copy, Debug)]
 pub enum Spawnables {
-    /// Used to mark spawn positions that are already blocked, e.g. player start positions
     TreasureChest,
     Turtle,
+    APCrystal,
 }
 
 fn spawn_table() -> RandomTable<Spawnables> {
     use Spawnables::*;
-    RandomTable::new().add(Turtle, 10)
+    RandomTable::new().add(Turtle, 10).add(APCrystal, 200)
 }
 
 pub fn fill_room(rng: &mut MapRng, room: &Rect, max_spawns: u32) -> SpawnList {

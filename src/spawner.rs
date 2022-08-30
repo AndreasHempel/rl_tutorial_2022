@@ -2,7 +2,10 @@ use bevy::prelude::*;
 use iyes_loopless::prelude::AppLooplessStateExt;
 
 use crate::{
-    components::{Actor, BlocksMovement, LevelGoal, Monster, Name, Position, Pushable, Viewshed},
+    components::{
+        Actor, BlocksMovement, Consumable, LevelGoal, Monster, Name, Position, Pushable,
+        RecoversAP, Viewshed,
+    },
     map::{GameMap, TileType},
     map_builder::{spawner::Spawnables, MapMetadata},
     player::Player,
@@ -63,15 +66,22 @@ fn spawn_things(
 ) {
     for ((x, y), s) in map_metadata.spawn_list.iter() {
         use Spawnables::*;
+        let pos = Position::new(*x, *y);
         match s {
             TreasureChest => treasure(
-                Position::new(*x, *y),
+                pos,
                 &mut commands,
                 asset_server.as_ref(),
                 texture_atlases.as_mut(),
             ),
             Turtle => turtle(
-                Position::new(*x, *y),
+                pos,
+                &mut commands,
+                asset_server.as_ref(),
+                texture_atlases.as_mut(),
+            ),
+            APCrystal => ap_crystal(
+                pos,
                 &mut commands,
                 asset_server.as_ref(),
                 texture_atlases.as_mut(),
@@ -88,6 +98,7 @@ fn spawn_things(
     }
 }
 
+/// Spawns a treasure chest
 fn treasure(
     pos: Position,
     commands: &mut Commands,
@@ -111,6 +122,7 @@ fn treasure(
         .insert(LevelGoal);
 }
 
+/// Spawns a turtle-ish enemy that will attempt to delay the player
 fn turtle(
     pos: Position,
     commands: &mut Commands,
@@ -137,6 +149,33 @@ fn turtle(
         .insert(Actor::default())
         .insert(BlocksMovement)
         .insert(Pushable)
+        .insert(Name("Turtle".to_string()));
+}
+
+/// Spawns a crystal that will recover action points when stepped upon
+fn ap_crystal(
+    pos: Position,
+    commands: &mut Commands,
+    asset_server: &AssetServer,
+    texture_atlases: &mut Assets<TextureAtlas>,
+) {
+    commands
+        .spawn_bundle(SpriteSheetBundle {
+            texture_atlas: get_texture_atlas_handle(
+                "Dawnlike/Objects/Ground0.png",
+                8,
+                7,
+                asset_server,
+                texture_atlases,
+            ),
+            transform: Transform::from_translation(Vec3::Z * ZBUF_ITEMS),
+            sprite: get_sprite(21),
+            ..default()
+        })
+        .insert(pos)
+        .insert(Consumable)
+        .insert(pos)
+        .insert(RecoversAP { amount: 8 })
         .insert(Name("Turtle".to_string()));
 }
 

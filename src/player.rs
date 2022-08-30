@@ -55,6 +55,11 @@ impl Player {
         Ok(())
     }
 
+    /// Recover the given amount of action points
+    pub fn recover_ap(&mut self, amount: u32) {
+        self.action_points += amount;
+    }
+
     /// End the game turn for this [`Player`]
     pub fn end_turn(&mut self) {
         self.completed += 1;
@@ -88,6 +93,6 @@ impl Plugin for PlayerPlugin {
 /// Increases each player's action points by a fixed amount
 fn increase_action_points(mut players: Query<&mut Player>) {
     for mut p in players.iter_mut() {
-        p.action_points += 40;
+        p.recover_ap(40);
     }
 }

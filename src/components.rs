@@ -147,3 +147,13 @@ pub struct Pushable;
 /// Marks tiles that are goals to proceed to the next level
 #[derive(Debug, Component)]
 pub struct LevelGoal;
+
+/// Marks a consumable item
+#[derive(Debug, Component)]
+pub struct Consumable;
+
+/// Marks an item that recovers action points upon use
+#[derive(Debug, Component)]
+pub struct RecoversAP {
+    pub amount: u32,
+}
