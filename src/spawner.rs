@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use iyes_loopless::prelude::AppLooplessStateExt;
 
 use crate::{
-    components::{Actor, BlocksMovement, LevelGoal, Monster, Position, Pushable, Viewshed},
+    components::{Actor, BlocksMovement, LevelGoal, Monster, Name, Position, Pushable, Viewshed},
     map::{GameMap, TileType},
     map_builder::{spawner::Spawnables, MapMetadata},
     player::Player,
@@ -46,6 +46,7 @@ fn setup_player(
             ..default()
         })
         .insert(Player::new(100))
+        .insert(Name("Player".to_string()))
         // The player position will be set upon map generation based on the starting position
         .insert(Viewshed::new(7))
         .insert(Actor::default())
@@ -135,7 +136,8 @@ fn turtle(
         .insert(Viewshed::new(7))
         .insert(Actor::default())
         .insert(BlocksMovement)
-        .insert(Pushable);
+        .insert(Pushable)
+        .insert(Name("Turtle".to_string()));
 }
 
 /// Load the specified spritesheet at return a handle to the resulting [`TextureAtlas`]

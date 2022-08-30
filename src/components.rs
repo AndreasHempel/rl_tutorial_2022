@@ -1,6 +1,16 @@
 use bevy::prelude::*;
 use bevy_inspector_egui::Inspectable;
 
+/// A descriptive name for an entity
+#[derive(Component, Debug)]
+pub struct Name(pub String);
+
+impl core::fmt::Display for Name {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 /// Marks a monstrous being
 #[derive(Component, Debug)]
 pub struct Monster;

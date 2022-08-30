@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext};
 use iyes_loopless::{prelude::IntoConditionalSystem, state::NextState};
 
-use crate::{player::Player, GameState};
+use crate::{log::LogBuffer, player::Player, GameState};
 
 /// Bundles systems responsible for rendering
 #[derive(Debug)]
@@ -34,19 +34,39 @@ fn setup_ui_elements(mut ctx: ResMut<EguiContext>) {
     ctx.ctx_mut().set_fonts(fonts);
 }
 
-fn render_ui(mut ctx: ResMut<EguiContext>, player: Query<&Player>) {
-    egui::SidePanel::right("Right panel").show(ctx.ctx_mut(), |ui| {
-        if let Ok(player) = player.get_single() {
-            ui.horizontal(|ui| {
-                ui.label("Action points left: ");
-                ui.label(player.get_remaining_ap().to_string());
+fn render_ui(mut ctx: ResMut<EguiContext>, player: Query<&Player>, logs: Res<LogBuffer>) {
+    egui::TopBottomPanel::bottom("UI panel")
+        .max_height(200.0)
+        .default_height(200.0)
+        .show(ctx.ctx_mut(), |ui| {
+            ui.vertical(|ui| {
+                if let Ok(player) = player.get_single() {
+                    ui.horizontal(|ui| {
+                        ui.horizontal(|ui| {
+                            ui.label("Action points left: ");
+                            ui.label(player.get_remaining_ap().to_string());
+                        });
+                        ui.add_space(50.0);
+                        ui.horizontal(|ui| {
+                            ui.label("Turns completed: ");
+                            ui.label(player.get_completed_turns().to_string());
+                        });
+                    });
+                }
+                ui.separator();
+                let row_height = ui.text_style_height(&egui::TextStyle::Body);
+                let num_logs = logs.len();
+                egui::ScrollArea::vertical()
+                    .auto_shrink([false; 2])
+                    .show_rows(ui, row_height, num_logs, |ui, row_range| {
+                        for idx in row_range {
+                            // Transform the row index to read the log buffer from the back (newest message at the top)
+                            let m = &logs[num_logs - (idx + 1)];
+                            ui.label(m);
+                        }
+                    });
             });
-            ui.horizontal(|ui| {
-                ui.label("Turns completed: ");
-                ui.label(player.get_completed_turns().to_string());
-            });
-        }
-    });
+        });
 }
 
 fn gameover_menu(mut ctx: ResMut<EguiContext>, mut commands: Commands, player: Query<&Player>) {

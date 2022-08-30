@@ -4,6 +4,7 @@ use iyes_loopless::prelude::AppLooplessStateExt;
 
 use crate::GameState;
 
+use crate::log::{GameEvent, LogMessage};
 use crate::{
     components::{Actor, Position, Pushable, TakingTurn, WantsToMove},
     map::GameMap,
@@ -48,6 +49,7 @@ fn move_actors(
     mut map: ResMut<GameMap>,
     mut commands: Commands,
     mut costs: EventWriter<ActionCost>,
+    mut logs: EventWriter<LogMessage>,
 ) {
     // Iterate over all actors that intend to move
     for (e, mov) in movers.iter() {
@@ -71,6 +73,14 @@ fn move_actors(
                 } else {
                     warn!("Cannot find position of {e:?} to move it to {next:?}!");
                 }
+            }
+            if cost > 1 {
+                logs.send(LogMessage {
+                    actor: e,
+                    event: GameEvent::PushEnemies {
+                        num_pushed: cost - 1,
+                    },
+                });
             }
             costs.send(ActionCost { actor: e, cost });
         } else {

@@ -30,7 +30,7 @@ pub enum GameState {
     WaitingForPlayer,
     /// Iterating through all active actors to resolve their actions
     Ticking,
-    /// Entering a new level (or starting the game)
+    /// Entering a new level (also after starting the game)
     EnterNewLevel,
     /// The player ran out of time
     GameOver,
@@ -86,6 +86,7 @@ fn main() {
         .add_plugin(monster_ai::AIPlugin)
         .add_plugin(input_handler::KeyboardInputPlugin)
         .add_plugin(player::PlayerPlugin)
+        .add_plugin(log::LogPlugin)
         .add_system(visibility::determine_visibility);
 
     #[cfg(debug_assertions)]
@@ -104,6 +105,7 @@ mod components;
 mod game_state;
 mod input_handler;
 mod level;
+mod log;
 mod map;
 mod map_builder;
 mod monster_ai;

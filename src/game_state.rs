@@ -4,6 +4,7 @@ use iyes_loopless::prelude::*;
 use crate::{
     actions::ActionCost,
     components::{Actor, LevelGoal, Position, TakingTurn},
+    log::{GameEvent, LogBuffer, LogMessage},
     player::{Player, TurnCounterError},
     GameState,
 };
@@ -39,10 +40,15 @@ impl Plugin for GameStatePlugin {
 }
 
 /// Initializes resources etc. to their state at the start of a game
-fn setup_game(mut commands: Commands, mut players: Query<&mut Player>) {
+fn setup_game(
+    mut commands: Commands,
+    mut players: Query<&mut Player>,
+    mut logs: ResMut<LogBuffer>,
+) {
     for mut p in players.iter_mut() {
         p.reset();
     }
+    logs.clear();
     commands.insert_resource(NextState(GameState::EnterNewLevel));
 }
 
@@ -71,12 +77,17 @@ fn wait_for_player(
 /// Checks if the player has reached the level goal
 fn check_level_goals(
     mut commands: Commands,
-    player: Query<&Position, With<Player>>,
+    player: Query<(Entity, &Position), With<Player>>,
     goals: Query<&Position, With<LevelGoal>>,
+    mut events: EventWriter<LogMessage>,
 ) {
-    if let Ok(pos) = player.get_single() {
+    if let Ok((e, pos)) = player.get_single() {
         for goal in goals.iter() {
             if pos == goal {
+                events.send(LogMessage {
+                    actor: e,
+                    event: GameEvent::FoundTreasure,
+                });
                 commands.insert_resource(NextState(GameState::EnterNewLevel));
             }
         }

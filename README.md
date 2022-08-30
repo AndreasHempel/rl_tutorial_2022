@@ -18,15 +18,17 @@ Further decisions taken while working on the game:
 
 ## State of the game
 
-This initial implementation has the following "features":
-- Build a map made up of room and corridors or based on cellular automata (selectable via CLI parameter)
-- Spawn a player on the screen and llow the player to move around using arrow keys
-- Field of vision computation based on symmetric shadow casting
-- Spawn a limited number of monsters on the map and have them wander across the map randomly
-- Spawn a single treasure chest per map
-- Monsters may be pushed out of the way as a simple substitute for combat
+The current implementation has the following features:
+- Build a map made up of room and corridors or based on cellular automata (selectable via CLI parameter).
+- Spawn a player on the screen and allow the player to move around using arrow keys.
+- Field of vision computation based on symmetric shadow casting.
+- Spawn a limited number of monsters on the map and have them wander across the map randomly until they spot the player. At that point, they chase the player around.
+- Moving a single tile consumes one action point. Once the player runs out of action points, it is game over.
+- Monsters may be pushed out of the way which consumes an additional action point per monster pushed.
+- Spawn a single treasure chest per map which serves as a 'level goal': reaching the treasure chest will teleport the player to a new level and regenerate a fixed number of action points.
+- A basic UI shows the number of available action points, the number of completed turns, and a running log of game events.
 
-This encompasses the core features up to and including part 5 (sans the 'melee combat' part) of the [`libtcod` tutorial](https://rogueliketutorials.com/tutorials/tcod/v2/part-5/).
+This encompasses the core features up to and including part 7 (sans the 'melee combat' part) of the [`libtcod` tutorial](https://rogueliketutorials.com/tutorials/tcod/v2/part-7/).
 
 ![The player character next to the goal treasure chest](journal/sotg_2022-07-22.png "Player character next to the treasure chest")
 

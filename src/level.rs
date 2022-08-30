@@ -3,7 +3,12 @@ use iyes_loopless::prelude::AppLooplessStateExt;
 use rand::prelude::StdRng;
 
 use crate::{
-    components::Position, map::GameMap, map_builder::MapMetadata, player::Player, GameState,
+    components::Position,
+    log::{GameEvent, LogMessage},
+    map::GameMap,
+    map_builder::MapMetadata,
+    player::Player,
+    GameState,
 };
 
 /// Plugin responsible for level generation and cleanup
@@ -54,7 +59,8 @@ impl Plugin for LevelPlugin {
         .add_enter_system(
             GameState::EnterNewLevel,
             despawn_map_entities.before(SystemLabels::GenerateLevel),
-        );
+        )
+        .add_exit_system(GameState::EnterNewLevel, welcome_player);
     }
 }
 
@@ -125,6 +131,16 @@ fn generate_level(
 
     *res_map = map;
     *res_map_metadata = map_metadata;
+}
+
+/// Logs a message for each player upon entering a new level
+fn welcome_player(players: Query<Entity, With<Player>>, mut logs: EventWriter<LogMessage>) {
+    for player in players.iter() {
+        logs.send(LogMessage {
+            actor: player,
+            event: GameEvent::WelcomePlayer,
+        });
+    }
 }
 
 /// Remove all entities on the current map
